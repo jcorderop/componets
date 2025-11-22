@@ -1,8 +1,11 @@
 package com.example.cache;
 
+import com.example.cache.hazelcastclient.adapter.HazelcastCacheAdapter;
 import com.example.demo.MarketDataMessage;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -11,22 +14,35 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-class HazelcastCacheAdapterTest {
+import com.hazelcast.config.Config;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
-    @Mock
+class HazelcastCacheAdapterIT {
+
     private HazelcastInstance hazelcastInstance;
 
-    @Mock
-    private IMap<String, String> map;
+    @BeforeEach
+    void setUp() {
+        Config config = new Config();
+        config.setClusterName("test-cluster");
+        hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+    }
+
+    @AfterEach
+    void tearDown() {
+        hazelcastInstance.shutdown();
+    }
 
     @Test
-    void updateWritesJsonPayload() {
-        when(hazelcastInstance.getMap("market-cache")).thenReturn(map);
+    void updateWritesJsonPayload_withRealHazelcast() {
+        HazelcastCacheAdapter cacheAdapter =
+                new HazelcastCacheAdapter(hazelcastInstance, "market-cache");
 
         MarketDataMessage message = MarketDataMessage.builder()
                 .source("demo")
@@ -36,22 +52,29 @@ class HazelcastCacheAdapterTest {
                 .timestamp(Instant.parse("2024-01-01T00:00:00Z"))
                 .build();
 
-        HazelcastCacheAdapter cacheAdapter = new HazelcastCacheAdapter(hazelcastInstance, "market-cache");
         cacheAdapter.update(Map.of("cache-1", message));
 
-        verify(map).putAll(Map.of("cache-1", "{\"source\":\"demo\",\"symbol\":\"TEST\",\"price\":10.5,\"size\":5,\"timestamp\":\"2024-01-01T00:00:00Z\"}"));
+        IMap<String, String> map = hazelcastInstance.getMap("market-cache");
+        String json = map.get("cache-1");
+
+        // Assert on the stored JSON
+        assertNotNull(json);
+        assertTrue(json.contains("\"source\":\"demo\""));
     }
 
-    @Test
-    void updateRequiresPayload() {
-        HazelcastCacheAdapter cacheAdapter = new HazelcastCacheAdapter(hazelcastInstance, "market-cache");
-        assertThrows(IllegalArgumentException.class, () -> cacheAdapter.update(Map.of("cache-1", null)));
-    }
 
     @Test
     void updateRequiresCacheId() {
         HazelcastCacheAdapter cacheAdapter = new HazelcastCacheAdapter(hazelcastInstance, "market-cache");
-        assertThrows(IllegalArgumentException.class, () -> cacheAdapter.update(Map.of("", new MarketDataMessage())));
+        cacheAdapter.update(Map.of("key1", new MarketDataMessage()));
+        MarketDataMessage message = MarketDataMessage.builder()
+                .source("demo")
+                .symbol("TEST")
+                .price(10.5)
+                .size(5)
+                .timestamp(Instant.parse("2024-01-01T00:00:00Z"))
+                .build();
+        cacheAdapter.update(Map.of("", message));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.example.demo;
 
-import com.example.cache.HazelcastCacheClient;
+import com.example.cache.hazelcastclient.adapter.HazelcastCacheClient;
+import com.example.cache.hazelcastclient.model.IJsonDto;
 import com.example.marketdata.config.MarketDataConsumerProperties;
 import com.example.marketdata.consumer.AbstractMarketDataConsumer;
 import com.example.marketdata.model.MarketDataEvent;
@@ -37,7 +38,7 @@ public class HazelcastMarketDataConsumer extends AbstractMarketDataConsumer {
     @Override
     public void dequeueBatch(final List<MarketDataEvent> batch) {
         log.info("Hazelcast consumer writing batch of size {} to cache {}", batch.size(), cacheName);
-        Map<String, MarketDataEvent> payloads = new HashMap<>();
+        Map<String, IJsonDto> payloads = new HashMap<>();
         for (int i = 0; i < batch.size(); i++) {
             payloads.put(cacheId + ":" + i, batch.get(i));
         }

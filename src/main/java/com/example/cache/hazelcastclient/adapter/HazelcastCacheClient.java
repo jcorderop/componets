@@ -1,4 +1,6 @@
-package com.example.cache;
+package com.example.cache.hazelcastclient.adapter;
+
+import com.example.cache.hazelcastclient.model.IJsonDto;
 
 import java.util.Map;
 

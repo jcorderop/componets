@@ -1,5 +1,6 @@
-package com.example.cache;
+package com.example.cache.hazelcastclient.adapter;
 
+import com.example.cache.hazelcastclient.model.IJsonDto;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import lombok.extern.slf4j.Slf4j;
@@ -30,24 +31,33 @@ public class HazelcastCacheAdapter implements HazelcastCacheClient {
         }
 
         Map<String, String> batch = buildBatch(entries);
-        final IMap<String, String> cache = hazelcastInstance.getMap(cacheName);
-        cache.putAll(batch);
-        log.debug("Updated Hazelcast cache {} with {} entries", cacheName, batch.size());
+        if (batch.isEmpty()) {
+            log.error("No entries to update in Hazelcast cache {}", cacheName);
+        } else {
+            final IMap<String, String> cache = hazelcastInstance.getMap(cacheName);
+            cache.putAll(batch);
+            log.debug("Updated Hazelcast cache {} with {} entries", cacheName, batch.size());
+        }
     }
 
     private Map<String, String> buildBatch(final Map<String, IJsonDto> entries) {
-        Map<String, String> batch = new HashMap<>();
-        entries.entrySet().stream()
-                .filter(entry -> {
-                    if (!StringUtils.hasText(entry.getKey())) {
-                        throw new IllegalArgumentException("cacheId is required");
-                    }
-                    if (entry.getValue() == null) {
-                        throw new IllegalArgumentException("payload is required");
-                    }
-                    return true;
-                })
-                .forEach(entry -> batch.put(entry.getKey(), entry.getValue().getJson()));
+        final Map<String, String> batch = new HashMap<>();
+        entries.forEach((key, value) -> {
+            try {
+                if (!StringUtils.hasText(key)) {
+                    throw new IllegalArgumentException("CacheId is required");
+                }
+                if (value == null) {
+                    throw new IllegalArgumentException(key + " Payload is required");
+                }
+
+                String json = value.toJson();
+                batch.put(key, json);
+
+            } catch (Exception e) {
+                log.error("Skipping invalid entry '{}': {}", key, e.getMessage(), e);
+            }
+        });
         return batch;
     }
 }

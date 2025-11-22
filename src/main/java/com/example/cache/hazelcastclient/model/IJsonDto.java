@@ -1,21 +1,22 @@
-package com.example.cache;
+package com.example.cache.hazelcastclient.model;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-/**
- * Marker interface for DTOs that can be serialized to JSON for Hazelcast caching.
- */
+
 public interface IJsonDto {
 
-    ObjectMapper JSON_MAPPER = new ObjectMapper();
-
+    ObjectMapper JSON_MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     /**
      * Serialize the current DTO to a JSON string representation.
      *
      * @return JSON payload
      */
-    default String getJson() {
+    default String toJson() throws IllegalArgumentException {
         try {
             return JSON_MAPPER.writeValueAsString(this);
         } catch (JsonProcessingException e) {
