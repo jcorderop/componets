@@ -1,4 +1,4 @@
-package com.example.cache.hazelcastclient.config;
+package com.example.hazelcastclient.config;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;

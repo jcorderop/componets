@@ -1,7 +1,7 @@
 package com.example.demo;
 
-import com.example.cache.hazelcastclient.adapter.HazelcastCacheClient;
-import com.example.cache.hazelcastclient.model.IJsonDto;
+import com.example.adapter.BaseAdapter;
+import com.example.hazelcastclient.model.IJsonDto;
 import com.example.marketdata.config.MarketDataConsumerProperties;
 import com.example.marketdata.consumer.AbstractMarketDataConsumer;
 import com.example.marketdata.model.MarketDataEvent;
@@ -16,12 +16,12 @@ import java.util.Map;
 @Component
 public class HazelcastMarketDataConsumer extends AbstractMarketDataConsumer {
 
-    private final HazelcastCacheClient cacheClient;
+    private final BaseAdapter cacheClient;
     private final String cacheId;
     private final String cacheName;
 
     public HazelcastMarketDataConsumer(final MarketDataConsumerProperties props,
-                                       final HazelcastCacheClient cacheClient,
+                                       final BaseAdapter cacheClient,
                                        @Value("${marketdata.hazelcast.cache-name:market-data-cache}") final String cacheName,
                                        @Value("${marketdata.hazelcast.cache-id:market-data-cache}") final String cacheId) {
         super(props);
@@ -42,6 +42,6 @@ public class HazelcastMarketDataConsumer extends AbstractMarketDataConsumer {
         for (int i = 0; i < batch.size(); i++) {
             payloads.put(cacheId + ":" + i, batch.get(i));
         }
-        cacheClient.update(payloads);
+        cacheClient.send(payloads);
     }
 }

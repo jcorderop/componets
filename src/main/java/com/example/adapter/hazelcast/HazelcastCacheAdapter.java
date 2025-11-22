@@ -1,6 +1,7 @@
-package com.example.cache.hazelcastclient.adapter;
+package com.example.adapter.hazelcast;
 
-import com.example.cache.hazelcastclient.model.IJsonDto;
+import com.example.adapter.BaseAdapter;
+import com.example.hazelcastclient.model.IJsonDto;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import lombok.extern.slf4j.Slf4j;
@@ -13,19 +14,18 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class HazelcastCacheAdapter implements HazelcastCacheClient {
+public class HazelcastCacheAdapter<T extends IJsonDto> implements BaseAdapter<T> {
 
     private final HazelcastInstance hazelcastInstance;
     private final String cacheName;
 
     public HazelcastCacheAdapter(final HazelcastInstance hazelcastInstance,
-                                 @Value("${marketdata.hazelcast.cache-name:market-data-cache}") final String cacheName) {
+                                 @Value("${marketdata.hazelcast.cache-name:default-name}") final String cacheName) {
         this.hazelcastInstance = hazelcastInstance;
         this.cacheName = cacheName;
     }
-
     @Override
-    public void update(final Map<String, IJsonDto> entries) {
+    public void send(final Map<String, T> entries) {
         if (entries == null || entries.isEmpty()) {
             throw new IllegalArgumentException("entries are required");
         }
@@ -40,7 +40,7 @@ public class HazelcastCacheAdapter implements HazelcastCacheClient {
         }
     }
 
-    private Map<String, String> buildBatch(final Map<String, IJsonDto> entries) {
+    private Map<String, String> buildBatch(final Map<String, T> entries) {
         final Map<String, String> batch = new HashMap<>();
         entries.forEach((key, value) -> {
             try {
@@ -51,7 +51,7 @@ public class HazelcastCacheAdapter implements HazelcastCacheClient {
                     throw new IllegalArgumentException(key + " Payload is required");
                 }
 
-                String json = value.toJson();
+                String json = ((IJsonDto) value).toJson();
                 batch.put(key, json);
 
             } catch (Exception e) {

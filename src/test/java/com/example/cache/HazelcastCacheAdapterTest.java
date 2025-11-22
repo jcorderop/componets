@@ -1,27 +1,21 @@
 package com.example.cache;
 
-import com.example.cache.hazelcastclient.adapter.HazelcastCacheAdapter;
+import com.example.adapter.hazelcast.HazelcastCacheAdapter;
 import com.example.demo.MarketDataMessage;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 class HazelcastCacheAdapterIT {
 
