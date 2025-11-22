@@ -1,4 +1,6 @@
 package com.example.marketdata.model;
 
-public interface MarketDataEvent {
+import com.example.cache.IJsonDto;
+
+public interface MarketDataEvent extends IJsonDto {
 }
