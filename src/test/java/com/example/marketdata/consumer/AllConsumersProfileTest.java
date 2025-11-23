@@ -1,6 +1,6 @@
 package com.example.marketdata.consumer;
 
-import com.example.marketdata.service.MarketDataHandlerService;
+import com.example.marketdata.service.ConsumersHandlerService;
 import com.hazelcast.core.Hazelcast;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ class AllConsumersProfileTest {
     private List<AbstractMarketDataConsumer> consumers;
 
     @Autowired
-    private MarketDataHandlerService marketDataHandlerService;
+    private ConsumersHandlerService consumersHandlerService;
 
     @Test
     void allConditionalConsumersLoadUnderDedicatedProfile() {
@@ -36,7 +36,7 @@ class AllConsumersProfileTest {
 
         // when
         // then
-        assertNotNull(marketDataHandlerService, "MarketDataHandlerService should be present");
+        assertNotNull(consumersHandlerService, "ConsumersHandlerService should be present");
         assertEquals(6, consumers.size(), "All six conditional consumers should load");
 
         assertTrue(consumers.stream().anyMatch(HazelcastMarketDataConsumer.class::isInstance));

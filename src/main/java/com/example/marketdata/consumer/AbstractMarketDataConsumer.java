@@ -94,7 +94,7 @@ public abstract class AbstractMarketDataConsumer
     }
 
     // ------------------------------------------------------------------------
-    // Public API for producers (e.g. MarketDataHandlerService)
+    // Public API for producers (e.g. ConsumersHandlerService)
     // ------------------------------------------------------------------------
 
     public void enqueue(final MarketDataEvent event) {

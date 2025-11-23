@@ -2,7 +2,7 @@ package com.example;
 
 import com.example.demo.MarketDataMessage;
 import com.example.marketdata.model.MarketDataEvent;
-import com.example.marketdata.service.MarketDataHandlerService;
+import com.example.marketdata.service.ConsumersHandlerService;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -24,7 +24,7 @@ public class DemoApplication {
     }
 
     @Bean
-    public ApplicationRunner marketDataStartupPublisher(MarketDataHandlerService marketDataHandlerService) {
+    public ApplicationRunner marketDataStartupPublisher(ConsumersHandlerService consumersHandlerService) {
         return args -> {
             double price = 1.0;
             for (int i = 0; i < 100; i++) {
@@ -36,7 +36,7 @@ public class DemoApplication {
                         .size(1_000_000)
                         .timestamp(Instant.now())
                         .build();
-                marketDataHandlerService.onEvent(event);
+                consumersHandlerService.onEvent(event);
                 Thread.sleep(1000);
             }
 
