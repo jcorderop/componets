@@ -12,6 +12,7 @@ class ConsumerStatsSinkLoggerServiceTest {
 
     @Test
     void publishDoesNotThrowAndLogsSnapshots() {
+        // given
         ConsumerStatsSinkLoggerService sink = new ConsumerStatsSinkLoggerService();
 
         ConsumerStatsSnapshot snapshot = ConsumerStatsSnapshot.builder()
@@ -27,6 +28,9 @@ class ConsumerStatsSinkLoggerServiceTest {
                 .queueSizeAtSnapshot(0)
                 .build();
 
+        // when
         sink.publish(List.of(snapshot));
+
+        // then
     }
 }

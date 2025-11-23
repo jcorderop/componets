@@ -11,6 +11,7 @@ class ConsumerStatsSnapshotTest {
 
     @Test
     void builderCreatesSnapshotWithAllFields() {
+        // given
         ConsumerStatsSnapshot snapshot = ConsumerStatsSnapshot.builder()
                 .consumerName("test-consumer")
                 .windowStartMillis(10L)
@@ -24,6 +25,9 @@ class ConsumerStatsSnapshotTest {
                 .queueSizeAtSnapshot(6)
                 .build();
 
+        // when
+
+        // then
         assertEquals("test-consumer", snapshot.consumerName());
         assertEquals(10L, snapshot.windowStartMillis());
         assertEquals(20L, snapshot.windowEndMillis());

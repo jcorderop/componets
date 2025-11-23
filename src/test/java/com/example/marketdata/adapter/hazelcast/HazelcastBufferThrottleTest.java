@@ -23,6 +23,7 @@ class HazelcastBufferThrottleTest {
         @SuppressWarnings("unchecked")
         HazelcastCacheAdapter<String> adapter = mock(HazelcastCacheAdapter.class);
 
+        // given
         HazelcastBufferThrottle<String> throttle = new HazelcastBufferThrottle<>(buffer, adapter);
 
         // when
@@ -43,6 +44,7 @@ class HazelcastBufferThrottleTest {
         @SuppressWarnings("unchecked")
         HazelcastCacheAdapter<String> adapter = mock(HazelcastCacheAdapter.class);
 
+        // given
         HazelcastBufferThrottle<String> throttle = new HazelcastBufferThrottle<>(buffer, adapter);
 
         // when
@@ -65,6 +67,7 @@ class HazelcastBufferThrottleTest {
         HazelcastCacheAdapter<String> adapter = mock(HazelcastCacheAdapter.class);
         doThrow(new RuntimeException("boom")).when(adapter).send(anyMap());
 
+        // given
         HazelcastBufferThrottle<String> throttle = new HazelcastBufferThrottle<>(buffer, adapter);
 
         // when

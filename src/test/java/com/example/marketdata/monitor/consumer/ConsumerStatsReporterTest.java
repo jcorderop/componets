@@ -33,10 +33,13 @@ class ConsumerStatsReporterTest {
         List<ConsumerStatsSnapshot> snapshots = List.of(snapshot);
         when(registry.snapshotAndReset()).thenReturn(snapshots);
 
+        // given
         ConsumerStatsReporter reporter = new ConsumerStatsReporter(registry, List.of(sink1, sink2));
 
+        // when
         reporter.publishStats();
 
+        // then
         verify(registry, times(1)).snapshotAndReset();
         verify(sink1, times(1)).publish(snapshots);
         verify(sink2, times(1)).publish(snapshots);
@@ -56,10 +59,13 @@ class ConsumerStatsReporterTest {
         ConsumerStatsSink bad = mock(ConsumerStatsSink.class);
         doThrow(new RuntimeException("boom")).when(bad).publish(snapshots);
 
+        // given
         ConsumerStatsReporter reporter = new ConsumerStatsReporter(registry, List.of(bad, good));
 
+        // when
         reporter.publishStats();
 
+        // then
         verify(bad).publish(snapshots);
         verify(good).publish(snapshots);
     }
@@ -79,11 +85,14 @@ class ConsumerStatsReporterTest {
         doThrow(new InterruptedException("stop"))
                 .when(interruptedSink).publish(snapshots);
 
+        // given
         ConsumerStatsReporter reporter =
                 new ConsumerStatsReporter(registry, List.of(interruptedSink, neverCalledSink));
 
+        // when
         reporter.publishStats();
 
+        // then
         verify(interruptedSink).publish(snapshots);
         verifyNoInteractions(neverCalledSink);
     }

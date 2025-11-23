@@ -16,13 +16,19 @@ class ConsumerStatsRegistryImplTest {
 
     @Test
     void snapshotAndResetReturnsEmptyListWhenNoData() {
+        // given
+
+        // when
         List<ConsumerStatsSnapshot> snapshots = registry.snapshotAndReset();
+
+        // then
         assertNotNull(snapshots);
         assertTrue(snapshots.isEmpty());
     }
 
     @Test
     void recordEnqueueDropAndQueueSizeSingleConsumer() {
+        // given
         String consumer = "consumer-1";
 
         registry.recordEnqueue(consumer);
@@ -31,7 +37,10 @@ class ConsumerStatsRegistryImplTest {
         registry.recordDrop(consumer);
         registry.recordQueueSize(consumer, 42);
 
+        // when
         List<ConsumerStatsSnapshot> snapshots = registry.snapshotAndReset();
+
+        // then
         assertEquals(1, snapshots.size());
 
         ConsumerStatsSnapshot snapshot = snapshots.get(0);
@@ -47,16 +56,19 @@ class ConsumerStatsRegistryImplTest {
 
     @Test
     void recordBatchProcessedUpdatesCountersAndLatency() {
+        // given
         String consumer = "latency-consumer";
 
         registry.recordBatchProcessed(consumer, 10, 100L);
         registry.recordBatchProcessed(consumer, 5, 50L);
         registry.recordQueueSize(consumer, 7);
 
+        // when
         long beforeSnapshot = System.currentTimeMillis();
         List<ConsumerStatsSnapshot> snapshots = registry.snapshotAndReset();
         long afterSnapshot = System.currentTimeMillis();
 
+        // then
         assertEquals(1, snapshots.size());
         ConsumerStatsSnapshot snapshot = snapshots.get(0);
 
@@ -78,21 +90,29 @@ class ConsumerStatsRegistryImplTest {
 
     @Test
     void snapshotAndResetResetsBucketsBetweenWindows() {
+        // given
         String consumer = "reset-consumer";
 
         registry.recordEnqueue(consumer);
         registry.recordBatchProcessed(consumer, 1, 10L);
 
+        // when
         List<ConsumerStatsSnapshot> first = registry.snapshotAndReset();
+
+        // then
         assertEquals(1, first.size());
         ConsumerStatsSnapshot s1 = first.get(0);
         assertEquals(1L, s1.eventsEnqueued());
         assertEquals(1L, s1.eventsProcessed());
 
+        // given
         registry.recordEnqueue(consumer);
         registry.recordBatchProcessed(consumer, 2, 20L);
 
+        // when
         List<ConsumerStatsSnapshot> second = registry.snapshotAndReset();
+
+        // then
         assertEquals(1, second.size());
         ConsumerStatsSnapshot s2 = second.get(0);
 
@@ -103,6 +123,7 @@ class ConsumerStatsRegistryImplTest {
 
     @Test
     void snapshotAndResetHandlesMultipleConsumers() {
+        // given
         String c1 = "consumer-A";
         String c2 = "consumer-B";
 
@@ -113,7 +134,10 @@ class ConsumerStatsRegistryImplTest {
         registry.recordEnqueue(c2);
         registry.recordBatchProcessed(c2, 3, 15L);
 
+        // when
         List<ConsumerStatsSnapshot> snapshots = registry.snapshotAndReset();
+
+        // then
         assertEquals(2, snapshots.size());
 
         ConsumerStatsSnapshot s1 = snapshots.stream()
