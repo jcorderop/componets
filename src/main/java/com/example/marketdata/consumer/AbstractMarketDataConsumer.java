@@ -1,7 +1,7 @@
 package com.example.marketdata.consumer;
 
-import com.example.marketdata.exception.ConsumerRetryableException;
 import com.example.marketdata.config.MarketDataConsumerProperties;
+import com.example.marketdata.exception.ConsumerRetryableException;
 import com.example.marketdata.model.MarketDataConsumerBatchProcessor;
 import com.example.marketdata.model.MarketDataEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -11,36 +11,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
+/**
+ * Base class for all market data consumers.
+ */
 @Slf4j
 public abstract class AbstractMarketDataConsumer
         implements MarketDataConsumerBatchProcessor, SmartLifecycle {
 
+    private final MarketDataConsumerProperties props;
     private final BlockingQueue<MarketDataEvent> queue;
-    private final int batchSize;
-    private final long pollTimeoutMillis;
-
-    private final ExecutorService executor =
-            Executors.newSingleThreadExecutor(r -> {
-                Thread t = new Thread(r);
-                t.setName("md-consumer-" + getConsumerName());
-                t.setDaemon(true);
-                return t;
-            });
+    private final ExecutorService consumerExecutor;
 
     private volatile boolean running = false;
 
     protected AbstractMarketDataConsumer(final MarketDataConsumerProperties props) {
+        this.props = props;
         this.queue = new ArrayBlockingQueue<>(props.getQueueCapacity());
-        this.batchSize = props.getBatchSize();
-        this.pollTimeoutMillis = props.getPollTimeoutMillis();
+        this.consumerExecutor = Executors.newSingleThreadExecutor(r ->
+                new Thread(r, getConsumerName() + "-consumer-thread"));
     }
 
-    public void enqueue(final MarketDataEvent message) {
-        boolean offered = queue.offer(message);
-        if (!offered) {
-            log.warn("Queue full for consumer {} - dropping message: {}", getConsumerName(), message);
-        }
-    }
+    // ------------------------------------------------------------------------
+    // SmartLifecycle
+    // ------------------------------------------------------------------------
 
     @Override
     public void start() {
@@ -48,31 +41,18 @@ public abstract class AbstractMarketDataConsumer
             return;
         }
         running = true;
-        executor.submit(this::runLoop);
-        log.info("Started MarketDataConsumer {}", getConsumerName());
+        log.info("Starting market data consumer {}", getConsumerName());
+        consumerExecutor.submit(this::runLoop);
     }
 
     @Override
     public void stop() {
+        if (!running) {
+            return;
+        }
+        log.info("Stopping market data consumer {}", getConsumerName());
         running = false;
-        executor.shutdownNow();
-        log.info("Stopped MarketDataConsumer {}", getConsumerName());
-    }
-
-    @Override
-    public boolean isRunning() {
-        return running;
-    }
-
-    @Override
-    public int getPhase() {
-        // If you care about startup order, adjust.
-        return 0;
-    }
-
-    @Override
-    public boolean isAutoStartup() {
-        return true;
+        consumerExecutor.shutdownNow();
     }
 
     @Override
@@ -81,52 +61,121 @@ public abstract class AbstractMarketDataConsumer
         callback.run();
     }
 
+    @Override
+    public boolean isRunning() {
+        return running;
+    }
+
+    @Override
+    public boolean isAutoStartup() {
+        return true;
+    }
+
+    @Override
+    public int getPhase() {
+        return 0;
+    }
+
+    // ------------------------------------------------------------------------
+    // Public API for producers (e.g. MarketDataHandlerService)
+    // ------------------------------------------------------------------------
+
+    public void enqueue(final MarketDataEvent event) {
+        if (event == null) {
+            log.warn("Ignoring null event for consumer {}", getConsumerName());
+            return;
+        }
+
+        if (!running) {
+            log.warn("Consumer {} is not running; dropping event {}", getConsumerName(), event);
+            return;
+        }
+
+        boolean offered = queue.offer(event);
+        if (!offered) {
+            log.error("Queue is full for consumer {} (capacity={}); dropping event {}",
+                    getConsumerName(), props.getQueueCapacity(), event);
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // Main consumer loop
+    // ------------------------------------------------------------------------
+
     private void runLoop() {
+        final int batchSize = props.getBatchSize();
+        final long pollTimeoutMillis = props.getPollTimeoutMillis();
+
         final List<MarketDataEvent> batch = new ArrayList<>(batchSize);
 
         try {
             while (running && !Thread.currentThread().isInterrupted()) {
 
                 MarketDataEvent first = queue.poll(pollTimeoutMillis, TimeUnit.MILLISECONDS);
-
                 if (first == null) {
                     continue;
                 }
 
                 batch.clear();
                 batch.add(first);
+
                 queue.drainTo(batch, batchSize - 1);
 
+                // Retry loop for this batch with progressive backoff
                 boolean processed = false;
+                long backoff = props.getInitialRetryBackoffMillis();
+                final long maxBackoff = props.getMaxRetryBackoffMillis();
+                final double multiplier = props.getRetryBackoffMultiplier();
+
                 while (!processed && running && !Thread.currentThread().isInterrupted()) {
-                    processed = executeProcessor(batch);
+                    try {
+                        processBatch(batch);
+                        processed = true; // success -> exit retry loop
+
+                    } catch (ConsumerRetryableException e) {
+                        log.warn("Retryable error in consumer {}: {}. Will retry batch after {} ms.",
+                                getConsumerName(), e.getMessage(), backoff, e);
+
+                        // Sleep with current backoff
+                        if (backoff > 0) {
+                            try {
+                                Thread.sleep(backoff);
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                                log.info("Consumer {} interrupted during retry sleep", getConsumerName());
+                                // allow outer loop to exit
+                                break;
+                            }
+                        }
+
+                        // Increase backoff for next retry
+                        if (multiplier > 1.0 && maxBackoff > 0) {
+                            backoff = Math.min((long) (backoff * multiplier), maxBackoff);
+                        }
+
+                    } catch (Exception e) {
+                        // Non-retryable: log and drop this batch, continue with next
+                        log.error("Non-retryable error in consumer {}: {}. Dropping batch.",
+                                getConsumerName(), e.getMessage(), e);
+                        processed = true;
+                    }
                 }
             }
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.info("Consumer {} interrupted", getConsumerName());
+        } finally {
+            log.info("Exiting consumer loop for {}", getConsumerName());
         }
     }
 
-    private boolean executeProcessor(List<MarketDataEvent> batch) {
-        boolean processed = false;
-        try {
-            processBatch(batch);
-            processed = true;
-        } catch (ConsumerRetryableException e) {
-            log.warn("Retryable error in consumer {}: {}. Will retry batch.", getConsumerName(), e.getMessage(), e);
-            try {
-                Thread.sleep(1_000L);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                log.info("Consumer {} interrupted during retry sleep", getConsumerName());
-            }
-        } catch (Exception e) {
-            // Non-retryable: log and drop this batch, continue with next
-            log.error("Non-retryable error in consumer {}: {}. Dropping batch.", getConsumerName(), e.getMessage(), e);
-            processed = true;
-        }
-        return processed;
-    }
+    // ------------------------------------------------------------------------
+    // To be implemented by concrete consumers
+    // ------------------------------------------------------------------------
 
+    public abstract String getConsumerName();
+
+    @Override
+    public abstract void processBatch(List<MarketDataEvent> batch);
 }
