@@ -42,4 +42,50 @@ class ConsumerStatsReporterTest {
         verify(sink2, times(1)).publish(snapshots);
         verifyNoMoreInteractions(sink1, sink2);
     }
+
+    @Test
+    void publishStatsContinuesWhenSinkThrowsRuntimeException() {
+        ConsumerStatsRegistry registry = mock(ConsumerStatsRegistry.class);
+        ConsumerStatsSnapshot snapshot = ConsumerStatsSnapshot.builder()
+                .consumerName("c1").windowStartMillis(1L).windowEndMillis(2L)
+                .build();
+        List<ConsumerStatsSnapshot> snapshots = List.of(snapshot);
+        when(registry.snapshotAndReset()).thenReturn(snapshots);
+
+        ConsumerStatsSink good = mock(ConsumerStatsSink.class);
+        ConsumerStatsSink bad = mock(ConsumerStatsSink.class);
+        doThrow(new RuntimeException("boom")).when(bad).publish(snapshots);
+
+        ConsumerStatsReporter reporter = new ConsumerStatsReporter(registry, List.of(bad, good));
+
+        reporter.publishStats();
+
+        verify(bad).publish(snapshots);
+        verify(good).publish(snapshots);
+    }
+
+    @Test
+    void publishStatsStopsOnInterruptedException() {
+        ConsumerStatsRegistry registry = mock(ConsumerStatsRegistry.class);
+        ConsumerStatsSnapshot snapshot = ConsumerStatsSnapshot.builder()
+                .consumerName("c1").windowStartMillis(1L).windowEndMillis(2L)
+                .build();
+        List<ConsumerStatsSnapshot> snapshots = List.of(snapshot);
+        when(registry.snapshotAndReset()).thenReturn(snapshots);
+
+        ConsumerStatsSink interruptedSink = mock(ConsumerStatsSink.class);
+        ConsumerStatsSink neverCalledSink = mock(ConsumerStatsSink.class);
+
+        doThrow(new InterruptedException("stop"))
+                .when(interruptedSink).publish(snapshots);
+
+        ConsumerStatsReporter reporter =
+                new ConsumerStatsReporter(registry, List.of(interruptedSink, neverCalledSink));
+
+        reporter.publishStats();
+
+        verify(interruptedSink).publish(snapshots);
+        verifyNoInteractions(neverCalledSink);
+    }
+
 }

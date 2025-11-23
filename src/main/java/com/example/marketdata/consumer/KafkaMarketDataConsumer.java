@@ -38,13 +38,6 @@ public class KafkaMarketDataConsumer extends AbstractMarketDataConsumer {
 
     @Override
     public void processBatch(List<MarketDataEvent> batch) {
-        try {
-            log.info("Kafka consumer processing batch of size {}", batch.size());
-            //} catch (IOException | TimeoutException e) {
-            // transient problem → retry
-            //    throw new ConsumerRetryableException("Temporary failure talking to service", e);
-        } catch (Exception e) {
-            throw e;
-        }
+        log.info("Kafka consumer processing batch of size {}", batch.size());
     }
 }

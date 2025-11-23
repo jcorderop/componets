@@ -50,24 +50,30 @@ public class HazelcastCacheAdapter<T> implements BaseAdapter<T> {
     }
 
     private void createHazelcastListener(HazelcastInstance hazelcastInstance) {
-
         hazelcastInstance.getLifecycleService()
                 .addLifecycleListener(new LifecycleListener() {
-            @Override
-            public void stateChanged(LifecycleEvent event) {
-                LifecycleState state = event.getState();
-                log.info("Hazelcast lifecycle event '{}' for cache {}", state, cacheName);
+                    @Override
+                    public void stateChanged(LifecycleEvent event) {
+                        LifecycleState state = event.getState();
+                        log.info("Hazelcast lifecycle event '{}' for cache {}", state, cacheName);
 
-                // Adjust depending on whether you use client or member
-                if (state == LifecycleState.CLIENT_CONNECTED || state == LifecycleState.STARTED || state == LifecycleState.MERGED) {
-                    // Cluster is up/connected again → resend everything we have
-                    resendAllFromLocalCache();
-                }
-                if (state == LifecycleState.CLIENT_DISCONNECTED || state == LifecycleState.SHUTDOWN) {
-                    log.warn("Hazelcast connection lost for cache {}; retaining {} buffered entries in shadow cache", cacheName, latestValues.size());
-                }
-            }
-        });
+                        // Consider both client and member lifecycle states
+                        if (state == LifecycleState.CLIENT_CONNECTED
+                                || state == LifecycleState.STARTED
+                                || state == LifecycleState.MERGED) {
+                            // Cluster is up/connected again → resend everything we have
+                            resendAllFromLocalCache();
+                        }
+
+                        if (state == LifecycleState.CLIENT_DISCONNECTED
+                                || state == LifecycleState.SHUTDOWN) {
+                            log.warn(
+                                    "Hazelcast connection lost for cache {}. {} buffered entries in shadow cache will be resent on reconnect.",
+                                    cacheName, latestValues.size()
+                            );
+                        }
+                    }
+                });
     }
 
     @Override

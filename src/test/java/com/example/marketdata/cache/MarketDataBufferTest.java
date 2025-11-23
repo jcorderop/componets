@@ -1,11 +1,14 @@
 
 package com.example.marketdata.cache;
 
+import com.example.marketdata.adapter.hazelcast.handler.MarketDataBufferHandler;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * Validates buffer insertion, emptiness checks, and atomic draining semantics.
@@ -69,5 +72,30 @@ class MarketDataBufferTest {
         // then
         assertEquals(1, second.size());
         assertEquals("v2", second.get("k2"));
+    }
+
+    @Test
+    void handleIgnoresNullOrBlankKey() {
+        @SuppressWarnings("unchecked")
+        MarketDataBuffer<String> buffer = mock(MarketDataBuffer.class);
+
+        MarketDataBufferHandler<String> handler = new MarketDataBufferHandler<>(buffer);
+
+        handler.handle(null, "v1");
+        handler.handle("   ", "v2");
+
+        verifyNoInteractions(buffer);
+    }
+
+    @Test
+    void handleIgnoresNullValue() {
+        @SuppressWarnings("unchecked")
+        MarketDataBuffer<String> buffer = mock(MarketDataBuffer.class);
+
+        MarketDataBufferHandler<String> handler = new MarketDataBufferHandler<>(buffer);
+
+        handler.handle("k1", null);
+
+        verifyNoInteractions(buffer);
     }
 }

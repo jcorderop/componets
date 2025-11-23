@@ -23,16 +23,16 @@ public class MarketDataBufferHandler<T> {
      */
     public void handle(final String key, final T value) {
         if (key == null || key.isBlank()) {
-            log.error("Ignoring market data: key is null/blank");
+            log.warn("Ignoring market data: key is null/blank");
             return;
         }
         if (value == null) {
-            log.error("Ignoring market data: value is null for key {}", key);
+            log.warn("Ignoring market data: value is null for key {}", key);
             return;
         }
 
         marketDataBuffer.put(key, value);
-        log.info("Buffered market data for key {}", key);
+        log.debug("Buffered market data for key {}", key);
     }
 
     /**

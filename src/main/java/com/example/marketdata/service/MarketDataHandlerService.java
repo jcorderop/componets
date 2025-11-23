@@ -19,7 +19,7 @@ public class MarketDataHandlerService {
     private final List<AbstractMarketDataConsumer> consumers;
 
     public void onEvent(final MarketDataEvent event) {
-        log.info("Received event {}", event);
+        log.debug("Received event {}", event);
         for (AbstractMarketDataConsumer consumer : consumers) {
             consumer.enqueue(event);
         }

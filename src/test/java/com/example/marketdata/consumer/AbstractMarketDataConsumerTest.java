@@ -184,4 +184,35 @@ class AbstractMarketDataConsumerTest {
             batchProcessed = 0;
         }
     }
+
+    @Test
+    void nonRetryableErrorDropsBatch() throws InterruptedException {
+        MarketDataConsumerProperties props = baseProps();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        // Consumer that always throws a RuntimeException
+        AbstractMarketDataConsumer consumer = new AbstractMarketDataConsumer(props, statsRegistry) {
+            @Override
+            public String getConsumerName() {
+                return "nonRetryableConsumer";
+            }
+
+            @Override
+            public void processBatch(List<MarketDataEvent> batch) {
+                throw new RuntimeException("non-retryable failure");
+            }
+        };
+
+        consumer.start();
+        try {
+            consumer.enqueue(sampleEvent());
+            // Give the consumer loop some time
+            TimeUnit.MILLISECONDS.sleep(100);
+
+            assertThat(statsRegistry.drops).isEqualTo(1);
+            assertThat(statsRegistry.batchProcessed).isZero();
+        } finally {
+            consumer.stop();
+        }
+    }
 }

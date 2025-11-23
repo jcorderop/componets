@@ -38,13 +38,9 @@ public class LoggingMarketDataConsumer extends AbstractMarketDataConsumer {
 
     @Override
     public void processBatch(List<MarketDataEvent> batch) {
-        try {
-            log.info("Logging consumer processing batch of size {}", batch.size());
-            //} catch (IOException | TimeoutException e) {
-            // transient problem → retry
-            //    throw new ConsumerRetryableException("Temporary failure talking to service", e);
-        } catch (Exception e) {
-            throw e;
+        log.info("Logging consumer processing batch of size {}", batch.size());
+        if (log.isDebugEnabled()) {
+            batch.forEach(e -> log.debug("Event: {}", e));
         }
     }
 
