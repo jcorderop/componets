@@ -38,30 +38,48 @@ public class ConsumerStatsRegistryImpl implements ConsumerStatsRegistry {
         return buckets.computeIfAbsent(consumer, k -> new StatsBucket());
     }
 
+    private void safeUpdate(String consumerName, Runnable action) {
+        try {
+            action.run();
+        } catch (Exception e) {
+            log.warn("Failed to update consumer stats for {}", consumerName, e);
+        }
+    }
+
     @Override
     public void recordEnqueue(String consumerName) {
-        getBucket(consumerName).eventsEnqueued.increment();
+        safeUpdate(consumerName, () -> getBucket(consumerName).eventsEnqueued.increment());
     }
 
     @Override
     public void recordDrop(String consumerName) {
-        getBucket(consumerName).eventsDropped.increment();
+        recordDrops(consumerName, 1);
+    }
+
+    @Override
+    public void recordDrops(String consumerName, int dropCount) {
+        if (dropCount <= 0) {
+            return;
+        }
+        safeUpdate(consumerName, () -> getBucket(consumerName).eventsDropped.add(dropCount));
     }
 
     @Override
     public void recordBatchProcessed(String consumerName, int batchSize, long durationMillis) {
-        StatsBucket b = getBucket(consumerName);
+        safeUpdate(consumerName, () -> {
+            StatsBucket b = getBucket(consumerName);
 
-        b.eventsProcessed.add(batchSize);
-        b.totalLatencyMillis.add(durationMillis);
+            b.eventsProcessed.add(batchSize);
+            b.totalLatencyMillis.add(durationMillis);
 
-        b.minLatencyMillis.accumulateAndGet(durationMillis, Math::min);
-        b.maxLatencyMillis.accumulateAndGet(durationMillis, Math::max);
+            b.minLatencyMillis.accumulateAndGet(durationMillis, Math::min);
+            b.maxLatencyMillis.accumulateAndGet(durationMillis, Math::max);
+        });
     }
 
     @Override
     public void recordQueueSize(String consumerName, int queueSize) {
-        getBucket(consumerName).queueSize.set(queueSize);
+        safeUpdate(consumerName, () -> getBucket(consumerName).queueSize.set(queueSize));
     }
 
     @Override
@@ -71,28 +89,32 @@ public class ConsumerStatsRegistryImpl implements ConsumerStatsRegistry {
 
         // Swap buckets atomically
         for (String consumer : buckets.keySet()) {
-            StatsBucket old = buckets.replace(consumer, new StatsBucket());
-            if (old == null) continue;
+            try {
+                StatsBucket old = buckets.replace(consumer, new StatsBucket());
+                if (old == null) continue;
 
-            long eventsProcessed = old.eventsProcessed.sum();
-            long totalLatency = old.totalLatencyMillis.sum();
+                long eventsProcessed = old.eventsProcessed.sum();
+                long totalLatency = old.totalLatencyMillis.sum();
 
-            double avg = eventsProcessed > 0
-                    ? ((double) totalLatency / eventsProcessed)
-                    : 0.0;
+                double avg = eventsProcessed > 0
+                        ? ((double) totalLatency / eventsProcessed)
+                        : 0.0;
 
-            snapshots.add(ConsumerStatsSnapshot.builder()
-                    .consumerName(consumer)
-                    .windowStartMillis(old.windowStartMillis)
-                    .windowEndMillis(now)
-                    .eventsEnqueued(old.eventsEnqueued.sum())
-                    .eventsProcessed(eventsProcessed)
-                    .eventsDropped(old.eventsDropped.sum())
-                    .minLatencyMillis(old.minLatencyMillis.get() == Long.MAX_VALUE ? 0 : old.minLatencyMillis.get())
-                    .maxLatencyMillis(old.maxLatencyMillis.get() == Long.MIN_VALUE ? 0 : old.maxLatencyMillis.get())
-                    .avgLatencyMillis(avg)
-                    .queueSizeAtSnapshot(old.queueSize.get())
-                    .build());
+                snapshots.add(ConsumerStatsSnapshot.builder()
+                        .consumerName(consumer)
+                        .windowStartMillis(old.windowStartMillis)
+                        .windowEndMillis(now)
+                        .eventsEnqueued(old.eventsEnqueued.sum())
+                        .eventsProcessed(eventsProcessed)
+                        .eventsDropped(old.eventsDropped.sum())
+                        .minLatencyMillis(old.minLatencyMillis.get() == Long.MAX_VALUE ? 0 : old.minLatencyMillis.get())
+                        .maxLatencyMillis(old.maxLatencyMillis.get() == Long.MIN_VALUE ? 0 : old.maxLatencyMillis.get())
+                        .avgLatencyMillis(avg)
+                        .queueSizeAtSnapshot(old.queueSize.get())
+                        .build());
+            } catch (Exception e) {
+                log.warn("Failed to snapshot stats for {}", consumer, e);
+            }
         }
 
         return snapshots;
