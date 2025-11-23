@@ -13,6 +13,26 @@ public class ConsumerStatsSinkLoggerService implements ConsumerStatsSink {
 
     @Override
     public void publish(List<ConsumerStatsSnapshot> snapshots) {
-        log.info("Publishing stats: {}", snapshots.toString());
+        if (snapshots == null || snapshots.isEmpty()) {
+            log.debug("No consumer stats to publish for the current interval");
+            return;
+        }
+
+        for (ConsumerStatsSnapshot snapshot : snapshots) {
+            log.info(
+                    "Consumer stats [{}]: window={}..{}, enqueued={}, processed={}, dropped={}, " +
+                            "latency_ms[min={}, max={}, avg={}], queueSize={}",
+                    snapshot.consumerName(),
+                    snapshot.windowStartMillis(),
+                    snapshot.windowEndMillis(),
+                    snapshot.eventsEnqueued(),
+                    snapshot.eventsProcessed(),
+                    snapshot.eventsDropped(),
+                    snapshot.minLatencyMillis(),
+                    snapshot.maxLatencyMillis(),
+                    snapshot.avgLatencyMillis(),
+                    snapshot.queueSizeAtSnapshot()
+            );
+        }
     }
 }

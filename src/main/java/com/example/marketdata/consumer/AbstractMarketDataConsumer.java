@@ -189,6 +189,7 @@ public abstract class AbstractMarketDataConsumer
                 // Non-retryable: log and drop this batch, continue with next
                 log.error("Non-retryable error in consumer {}: {}. Dropping batch.",
                         getConsumerName(), e.getMessage(), e);
+                consumerStatsRegistry.recordDrops(getConsumerName(), batch.size());
                 processed = true;
             }
         }
