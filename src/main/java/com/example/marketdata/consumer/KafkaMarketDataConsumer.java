@@ -3,12 +3,19 @@ package com.example.marketdata.consumer;
 import com.example.marketdata.config.MarketDataConsumerProperties;
 import com.example.marketdata.model.MarketDataEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(
+        prefix = "marketdata.consumers.kafka",
+        name = "enabled",
+        havingValue = "true",
+        matchIfMissing = false
+)
 public class KafkaMarketDataConsumer extends AbstractMarketDataConsumer {
 
     public KafkaMarketDataConsumer(final MarketDataConsumerProperties props) {

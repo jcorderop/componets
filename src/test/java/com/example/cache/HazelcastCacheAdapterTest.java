@@ -46,7 +46,7 @@ class HazelcastCacheAdapterIT {
                 .timestamp(Instant.parse("2024-01-01T00:00:00Z"))
                 .build();
 
-        cacheAdapter.update(Map.of("cache-1", message));
+        cacheAdapter.send(Map.of("cache-1", message));
 
         IMap<String, String> map = hazelcastInstance.getMap("market-cache");
         String json = map.get("cache-1");
@@ -60,7 +60,7 @@ class HazelcastCacheAdapterIT {
     @Test
     void updateRequiresCacheId() {
         HazelcastCacheAdapter cacheAdapter = new HazelcastCacheAdapter(hazelcastInstance, "market-cache");
-        cacheAdapter.update(Map.of("key1", new MarketDataMessage()));
+        cacheAdapter.send(Map.of("key1", new MarketDataMessage()));
         MarketDataMessage message = MarketDataMessage.builder()
                 .source("demo")
                 .symbol("TEST")
@@ -68,13 +68,13 @@ class HazelcastCacheAdapterIT {
                 .size(5)
                 .timestamp(Instant.parse("2024-01-01T00:00:00Z"))
                 .build();
-        cacheAdapter.update(Map.of("", message));
+        cacheAdapter.send(Map.of("", message));
     }
 
     @Test
     void updateRequiresEntries() {
         HazelcastCacheAdapter cacheAdapter = new HazelcastCacheAdapter(hazelcastInstance, "market-cache");
-        assertThrows(IllegalArgumentException.class, () -> cacheAdapter.update(null));
-        assertThrows(IllegalArgumentException.class, () -> cacheAdapter.update(Map.of()));
+        assertThrows(IllegalArgumentException.class, () -> cacheAdapter.send(null));
+        assertThrows(IllegalArgumentException.class, () -> cacheAdapter.send(Map.of()));
     }
 }

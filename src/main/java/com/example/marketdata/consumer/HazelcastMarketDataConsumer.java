@@ -6,6 +6,7 @@ import com.example.marketdata.config.MarketDataConsumerProperties;
 import com.example.marketdata.model.MarketDataEvent;
 import com.example.marketdata.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,6 +15,12 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(
+        prefix = "marketdata.consumers.hazelcast",
+        name = "enabled",
+        havingValue = "true",
+        matchIfMissing = false
+)
 public class HazelcastMarketDataConsumer<T> extends AbstractMarketDataConsumer {
 
     final MarketDataBufferHandler<T> marketDataBufferHandler;

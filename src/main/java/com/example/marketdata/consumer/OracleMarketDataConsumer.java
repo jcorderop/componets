@@ -11,16 +11,16 @@ import java.util.List;
 @Slf4j
 @Component
 @ConditionalOnProperty(
-        prefix = "marketdata.consumers.postgres",
+        prefix = "marketdata.consumers.oracle",
         name = "enabled",
         havingValue = "true",
         matchIfMissing = false
 )
-public class PostgresMarketDataConsumer extends AbstractMarketDataConsumer {
+public class OracleMarketDataConsumer extends AbstractMarketDataConsumer {
 
-    public PostgresMarketDataConsumer(final MarketDataConsumerProperties props) {
+    public OracleMarketDataConsumer(final MarketDataConsumerProperties props) {
         super(props);
-        log.info("Created Postgres consumer");
+        log.info("Created Oracle consumer");
     }
 
     @Override
