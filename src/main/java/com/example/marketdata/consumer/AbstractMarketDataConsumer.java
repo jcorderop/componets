@@ -13,7 +13,19 @@ import java.util.List;
 import java.util.concurrent.*;
 
 /**
- * Base class for all market data consumers.
+ * Base class for market data consumers that manages queueing, lifecycle hooks, batch
+ * processing, and retry/backoff behavior while delegating actual batch handling to
+ * subclasses.
+ * <p>
+ * Reads {@code marketdata.default.*} properties via {@link com.example.marketdata.config.MarketDataConsumerProperties}
+ * to size queues and tune batching/backoff:
+ * <ul>
+ *     <li>{@code queue-capacity} – queue depth used for {@link java.util.concurrent.ArrayBlockingQueue}.</li>
+ *     <li>{@code batch-size} – maximum items pulled from the queue before processing.</li>
+ *     <li>{@code poll-timeout-millis} – wait time before flushing a partial batch.</li>
+ *     <li>{@code initial-retry-backoff-millis}, {@code max-retry-backoff-millis},
+ *     {@code retry-backoff-multiplier} – govern exponential retry delays when batch processing fails.</li>
+ * </ul>
  */
 @Slf4j
 public abstract class AbstractMarketDataConsumer

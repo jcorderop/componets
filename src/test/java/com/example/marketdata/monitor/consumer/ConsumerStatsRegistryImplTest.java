@@ -6,6 +6,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Covers the in-memory {@link ConsumerStatsRegistryImpl} implementation to ensure counters and
+ * snapshots behave correctly across windows and multiple consumers.
+ */
 class ConsumerStatsRegistryImplTest {
 
     private final ConsumerStatsRegistryImpl registry = new ConsumerStatsRegistryImpl();

@@ -9,6 +9,9 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.*;
 
+/**
+ * Verifies the throttle drains the buffer and forwards batches to the cache adapter.
+ */
 class HazelcastBufferThrottleTest {
 
     @Test

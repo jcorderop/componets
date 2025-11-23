@@ -4,6 +4,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Verifies that the {@link ConsumerStatsSnapshot} builder wires each field as expected.
+ */
 class ConsumerStatsSnapshotTest {
 
     @Test

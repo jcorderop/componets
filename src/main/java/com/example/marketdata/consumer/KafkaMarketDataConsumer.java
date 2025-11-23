@@ -9,6 +9,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Placeholder consumer that would forward batches to Kafka when enabled via configuration.
+ * <p>
+ * Activated when {@code marketdata.consumers.kafka.enabled=true} and inherits queue, batch,
+ * and retry tuning from {@code marketdata.default.*}.
+ */
 @Slf4j
 @Component
 @ConditionalOnProperty(

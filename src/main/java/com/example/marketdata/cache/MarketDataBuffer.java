@@ -7,6 +7,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Thread-safe buffer that temporarily stores the latest market data entries before they
+ * are flushed to an external cache or adapter.
+ */
 @Component
 public class MarketDataBuffer <T> {
 

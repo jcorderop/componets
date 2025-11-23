@@ -9,6 +9,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Stub consumer illustrating how a ZeroMQ sink might process market data batches.
+ * <p>
+ * Activated when {@code marketdata.consumers.zmq.enabled=true} and inherits queue, batch,
+ * and retry tuning from {@code marketdata.default.*}.
+ */
 @Slf4j
 @Component
 @ConditionalOnProperty(

@@ -8,6 +8,9 @@ import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Ensures JSON serialization of domain messages preserves key fields and timestamps.
+ */
 class JsonUtilTest {
 
     @Test

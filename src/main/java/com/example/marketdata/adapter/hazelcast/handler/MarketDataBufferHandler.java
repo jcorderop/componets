@@ -7,6 +7,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+/**
+ * Validates and routes market data entries into the shared buffer that backs Hazelcast
+ * cache updates, preventing malformed records from being stored.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

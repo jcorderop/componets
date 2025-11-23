@@ -7,6 +7,14 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Coordinates the periodic publication of consumer metrics by gathering snapshots from the
+ * {@link ConsumerStatsRegistry} and forwarding them to every configured {@link ConsumerStatsSink}.
+ * Any individual sink failure is logged and ignored so the scheduled task keeps running.
+ * <p>
+ * Scheduling is driven by {@code marketdata.stats.interval-ms} (default {@code 60000}) via
+ * the {@link org.springframework.scheduling.annotation.Scheduled} annotation.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

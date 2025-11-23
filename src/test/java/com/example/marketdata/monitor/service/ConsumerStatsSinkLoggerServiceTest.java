@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+/**
+ * Validates that the logging sink safely handles snapshots without throwing exceptions.
+ */
 class ConsumerStatsSinkLoggerServiceTest {
 
     @Test

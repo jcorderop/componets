@@ -6,6 +6,9 @@ import java.util.List;
 
 import static org.mockito.Mockito.*;
 
+/**
+ * Ensures {@link ConsumerStatsReporter} retrieves snapshots and forwards them to every sink.
+ */
 class ConsumerStatsReporterTest {
 
     @Test

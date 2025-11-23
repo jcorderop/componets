@@ -10,6 +10,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * Thread-safe implementation of {@link ConsumerStatsRegistry} that aggregates metrics for each
+ * consumer in memory using per-consumer buckets. Each snapshot resets the bucket to start a new
+ * reporting window while retaining a consistent window start time for the captured metrics.
+ */
 @Slf4j
 @Component
 public class ConsumerStatsRegistryImpl implements ConsumerStatsRegistry {
