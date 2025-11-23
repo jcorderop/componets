@@ -47,6 +47,11 @@ public class ConsumerStatsRegistryImpl implements ConsumerStatsRegistry {
         try {
             action.run();
         } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+                log.warn("Interrupted while updating consumer stats for {}", consumerName, e);
+                return;
+            }
             log.warn("Failed to update consumer stats for {}", consumerName, e);
         }
     }

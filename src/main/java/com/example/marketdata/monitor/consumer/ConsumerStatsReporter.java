@@ -32,18 +32,26 @@ public class ConsumerStatsReporter {
             } catch (Exception e) {
                 // Don't allow a faulty sink to stop stats publication for others
                 // or to break the scheduled task.
-                throwIfInterrupted(e);
                 String sinkName = sink.getClass().getSimpleName();
+                if (throwIfInterrupted(e)) {
+                    log.warn("Consumer stats publishing interrupted while calling sink {}", sinkName, e);
+                    return;
+                }
                 // Log at warn to draw attention without spamming error-level logs every interval.
                 log.warn("Consumer stats sink {} failed to publish stats", sinkName, e);
             }
         }
     }
 
-    private static void throwIfInterrupted(Exception e) {
+    private static boolean throwIfInterrupted(Exception e) {
         if (e instanceof InterruptedException) {
             Thread.currentThread().interrupt();
+            return true;
         }
+        if (Thread.currentThread().isInterrupted()) {
+            return true;
+        }
+        return false;
     }
 }
 

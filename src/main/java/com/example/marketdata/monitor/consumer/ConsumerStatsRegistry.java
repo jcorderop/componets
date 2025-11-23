@@ -5,7 +5,8 @@ import java.util.List;
 /**
  * Collects runtime metrics for each consumer and provides snapshots for reporting.
  * Implementations are responsible for tracking counts and timing information between
- * reporting windows and returning immutable snapshots when requested.
+ * reporting windows and returning immutable snapshots when requested. Latency metrics are
+ * tracked in milliseconds.
  */
 public interface ConsumerStatsRegistry {
     void recordEnqueue(String consumer);
