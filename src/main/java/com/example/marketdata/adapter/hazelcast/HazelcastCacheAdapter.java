@@ -49,16 +49,15 @@ public class HazelcastCacheAdapter<T> implements BaseAdapter<T> {
             @Override
             public void stateChanged(LifecycleEvent event) {
                 LifecycleState state = event.getState();
-                log.info("Hazelcast lifecycle event: {}", state);
+                log.info("Hazelcast lifecycle event '{}' for cache {}", state, cacheName);
 
                 // Adjust depending on whether you use client or member
                 if (state == LifecycleState.CLIENT_CONNECTED || state == LifecycleState.STARTED || state == LifecycleState.MERGED) {
                     // Cluster is up/connected again → resend everything we have
                     resendAllFromLocalCache();
                 }
-                // You can log disconnections if you want:
                 if (state == LifecycleState.CLIENT_DISCONNECTED || state == LifecycleState.SHUTDOWN) {
-                    log.warn("Hazelcast disconnected or shut down; will keep buffering latest values locally");
+                    log.warn("Hazelcast connection lost for cache {}; retaining {} buffered entries in shadow cache", cacheName, latestValues.size());
                 }
             }
         });
@@ -71,9 +70,16 @@ public class HazelcastCacheAdapter<T> implements BaseAdapter<T> {
         }
 
         Map<String, String> batch = buildBatch(entries);
+        int droppedEntries = entries.size() - batch.size();
+
         if (batch.isEmpty()) {
-            log.debug("No valid entries to update in Hazelcast cache {}", cacheName);
+            log.info("Received {} entries for Hazelcast cache {}, but none were valid; skipping update", entries.size(), cacheName);
             return;
+        }
+
+        if (droppedEntries > 0) {
+            log.warn("{} entries skipped for Hazelcast cache {} due to validation errors; proceeding with {} valid entries",
+                    droppedEntries, cacheName, batch.size());
         }
 
         // Always update local secondary cache first (latest view)
@@ -83,7 +89,8 @@ public class HazelcastCacheAdapter<T> implements BaseAdapter<T> {
         try {
             final IMap<String, String> cache = hazelcastInstance.getMap(cacheName);
             cache.putAll(batch);
-            log.debug("Updated Hazelcast cache {} with {} entries", cacheName, batch.size());
+            log.info("Updated Hazelcast cache {} with {} entries; dropped {} invalid entries",
+                    cacheName, batch.size(), droppedEntries);
 
         } catch (HazelcastException e) {
             // Hazelcast-specific error → decide retryable vs not
@@ -134,7 +141,7 @@ public class HazelcastCacheAdapter<T> implements BaseAdapter<T> {
                 String json = JsonUtil.toJson(value);
                 batch.put(key, json);
             } catch (Exception e) {
-                log.error("Skipping invalid entry '{}': {}", key, e.getMessage(), e);
+                log.warn("Skipping invalid Hazelcast entry for cache {} and key '{}': {}", cacheName, key, e.getMessage(), e);
             }
         });
         return batch;
