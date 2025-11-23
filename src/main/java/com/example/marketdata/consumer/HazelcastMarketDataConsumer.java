@@ -3,8 +3,8 @@ package com.example.marketdata.consumer;
 import com.example.marketdata.adapter.hazelcast.HazelcastBufferThrottle;
 import com.example.marketdata.adapter.hazelcast.handler.MarketDataBufferHandler;
 import com.example.marketdata.config.MarketDataConsumerProperties;
-import com.example.marketdata.model.IJsonDto;
 import com.example.marketdata.model.MarketDataEvent;
+import com.example.marketdata.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -14,14 +14,14 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-public class HazelcastMarketDataConsumer extends AbstractMarketDataConsumer {
+public class HazelcastMarketDataConsumer<T> extends AbstractMarketDataConsumer {
 
-    final MarketDataBufferHandler<IJsonDto> marketDataBufferHandler;
-    final HazelcastBufferThrottle<IJsonDto> hazelcastBufferThrottle;
+    final MarketDataBufferHandler<T> marketDataBufferHandler;
+    final HazelcastBufferThrottle<T> hazelcastBufferThrottle;
 
     public HazelcastMarketDataConsumer(final MarketDataConsumerProperties props,
-                                       final MarketDataBufferHandler<IJsonDto> marketDataBufferHandler,
-                                       final HazelcastBufferThrottle<IJsonDto> hazelcastBufferThrottle) {
+                                       final MarketDataBufferHandler<T> marketDataBufferHandler,
+                                       final HazelcastBufferThrottle<T> hazelcastBufferThrottle) {
         super(props);
         this.marketDataBufferHandler = marketDataBufferHandler;
         this.hazelcastBufferThrottle = hazelcastBufferThrottle;
@@ -35,21 +35,16 @@ public class HazelcastMarketDataConsumer extends AbstractMarketDataConsumer {
 
     @Override
     public void processBatch(List<MarketDataEvent> batch) {
-        try {
-            log.info("Hazelcast consumer processing batch of size {}", batch.size());
-            final Map<String, IJsonDto> batchMap = batch.stream()
-                    .collect(Collectors.toMap(
-                            MarketDataEvent::getCacheId,
-                            e -> (IJsonDto) e,
-                            (oldVal, newVal) -> newVal
-                    ));
+        log.info("Hazelcast consumer processing batch of size {}", batch.size());
 
-            this.marketDataBufferHandler.handleAll(batchMap);
-        //} catch (IOException | TimeoutException e) {
-            // transient problem → retry
-        //    throw new ConsumerRetryableException("Temporary failure talking to service", e);
-        } catch (Exception e) {
-            throw e;
-        }
+        @SuppressWarnings("unchecked")
+        Map<String, T> batchMap = batch.stream()
+                .collect(Collectors.toMap(
+                        MarketDataEvent::getCacheId,
+                        e -> (T) e,
+                        (oldVal, newVal) -> newVal
+                ));
+
+        marketDataBufferHandler.handleAll(batchMap);
     }
 }

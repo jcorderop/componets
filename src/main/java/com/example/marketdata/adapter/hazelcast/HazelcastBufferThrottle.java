@@ -1,7 +1,6 @@
 package com.example.marketdata.adapter.hazelcast;
 
 import com.example.marketdata.cache.MarketDataBuffer;
-import com.example.marketdata.model.IJsonDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,7 +11,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class HazelcastBufferThrottle<T extends IJsonDto> {
+public class HazelcastBufferThrottle<T> {
 
     private final MarketDataBuffer<T> marketDataBuffer;
     private final HazelcastCacheAdapter<T> hazelcastCacheAdapter;
@@ -28,6 +27,10 @@ public class HazelcastBufferThrottle<T extends IJsonDto> {
         Map<String, T> batch = marketDataBuffer.releaseBuffer();
 
         log.info("Flushing [{}] elements from throttled cache", batch.size());
-        hazelcastCacheAdapter.send(batch);
+        try {
+            hazelcastCacheAdapter.send(batch);
+        } catch (Exception e) {
+            log.error("Error flushing {} elements to Hazelcast; they will be lost or need recomputation", batch.size(), e);
+        }
     }
 }

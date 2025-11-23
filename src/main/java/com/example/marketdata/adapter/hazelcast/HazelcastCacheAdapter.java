@@ -1,13 +1,16 @@
 package com.example.marketdata.adapter.hazelcast;
 
 import com.example.marketdata.adapter.BaseAdapter;
-import com.example.marketdata.model.IJsonDto;
+import com.example.marketdata.exception.ConsumerRetryableException;
+import com.example.marketdata.exception.ConsumerRuntimeException;
+import com.example.marketdata.util.JsonUtil;
+import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.LifecycleEvent;
 import com.hazelcast.core.LifecycleListener;
-import com.hazelcast.core.LifecycleService;
 import com.hazelcast.core.LifecycleEvent.LifecycleState;
 import com.hazelcast.map.IMap;
+import com.hazelcast.spi.exception.RetryableHazelcastException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -20,12 +23,13 @@ import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Component
-public class HazelcastCacheAdapter<T extends IJsonDto> implements BaseAdapter<T> {
+public class HazelcastCacheAdapter<T> implements BaseAdapter<T> {
 
     private final HazelcastInstance hazelcastInstance;
     private final String cacheName;
 
     // Secondary local cache with latest values (JSON already serialized)
+    // this cache will have the latest updates and will be resent when Hazelcast is reconnected.
     private final ConcurrentMap<String, String> latestValues = new ConcurrentHashMap<>();
 
     public HazelcastCacheAdapter(final HazelcastInstance hazelcastInstance,
@@ -68,26 +72,57 @@ public class HazelcastCacheAdapter<T extends IJsonDto> implements BaseAdapter<T>
 
         Map<String, String> batch = buildBatch(entries);
         if (batch.isEmpty()) {
-            log.error("No entries to update in Hazelcast cache {}", cacheName);
+            log.debug("No valid entries to update in Hazelcast cache {}", cacheName);
             return;
         }
 
         // Always update local secondary cache first (latest view)
+        // in case of reconnection this cache will be full re-send
         latestValues.putAll(batch);
 
         try {
             final IMap<String, String> cache = hazelcastInstance.getMap(cacheName);
             cache.putAll(batch);
             log.debug("Updated Hazelcast cache {} with {} entries", cacheName, batch.size());
-        } catch (Exception e) {
-            // If Hazelcast is down, we just keep local latestValues
-            log.error("Failed to send batch to Hazelcast cache {}. Kept {} entries in local cache for retry.",
-                    cacheName, batch.size(), e);
+
+        } catch (HazelcastException e) {
+            // Hazelcast-specific error → decide retryable vs not
+            if (isRetryableHazelcastException(e)) {
+                log.warn("Retryable Hazelcast error while updating cache {}: {}. " +
+                                "Entries remain in local shadow cache for retry.",
+                        cacheName, e.getMessage(), e);
+                throw new ConsumerRetryableException(
+                        "Retryable Hazelcast error while updating cache " + cacheName, e);
+            } else {
+                log.error("Non-retryable Hazelcast error while updating cache {}. " +
+                                "Entries remain in local shadow cache, but this batch will be dropped by the consumer.",
+                        cacheName, e);
+                throw new ConsumerRuntimeException("Non-retryable Hazelcast error while updating cache " + cacheName, e);
+            }
+
+        } catch (RuntimeException e) {
+            // Any other runtime exception in the adapter is treated as non-retryable
+            log.error("Unexpected runtime error while updating Hazelcast cache {}. " +
+                    "Entries remain in local shadow cache.", cacheName, e);
+            throw new ConsumerRuntimeException("Unexpected error while updating cache " + cacheName, e);
         }
     }
 
-    private Map<String, String> buildBatch(final Map<String, T> entries) {
-        final Map<String, String> batch = new HashMap<>();
+    /**
+     * Check if the exception (or any cause) is a retryable Hazelcast exception.
+     */
+    private boolean isRetryableHazelcastException(Throwable t) {
+        while (t != null) {
+            if (t instanceof RetryableHazelcastException) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
+    }
+
+    private Map<String, String> buildBatch(Map<String, T> entries) {
+        Map<String, String> batch = new HashMap<>();
         entries.forEach((key, value) -> {
             try {
                 if (!StringUtils.hasText(key)) {
@@ -96,10 +131,8 @@ public class HazelcastCacheAdapter<T extends IJsonDto> implements BaseAdapter<T>
                 if (value == null) {
                     throw new IllegalArgumentException(key + " Payload is required");
                 }
-
-                String json = value.toJson();
+                String json = JsonUtil.toJson(value);
                 batch.put(key, json);
-
             } catch (Exception e) {
                 log.error("Skipping invalid entry '{}': {}", key, e.getMessage(), e);
             }

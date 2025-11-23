@@ -5,26 +5,24 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 public class MarketDataBuffer <T> {
 
-    private final ConcurrentHashMap<String, T> cache = new ConcurrentHashMap<>();
+    // Atomic drain of the entire buffer without losing messages, and without locking
+    private final AtomicReference<ConcurrentHashMap<String, T>> ref = new AtomicReference<>(new ConcurrentHashMap<>());
 
     public void put(String key, T value) {
-        cache.put(key, value);
+        ref.get().put(key, value);
     }
 
     public boolean isEmpty() {
-        return cache.isEmpty();
+        return ref.get().isEmpty();
     }
 
-    /**
-     * Returns a snapshot of the current contents and clears the cache.
-     */
     public Map<String, T> releaseBuffer() {
-        Map<String, T> snapshot = new HashMap<>(cache);
-        cache.clear();
-        return snapshot;
+        ConcurrentHashMap<String, T> current = ref.getAndSet(new ConcurrentHashMap<>());
+        return new HashMap<>(current);
     }
 }
