@@ -18,6 +18,7 @@ class MarketDataHandlerServiceTest {
         AbstractMarketDataConsumer c1 = mock(AbstractMarketDataConsumer.class);
         AbstractMarketDataConsumer c2 = mock(AbstractMarketDataConsumer.class);
 
+        // given
         MarketDataHandlerService service = new MarketDataHandlerService(List.of(c1, c2));
 
         MarketDataEvent event = MarketDataMessage.builder()
@@ -28,8 +29,10 @@ class MarketDataHandlerServiceTest {
                 .timestamp(Instant.parse("2024-01-01T00:00:00Z"))
                 .build();
 
+        // when
         service.onEvent(event);
 
+        // then
         verify(c1).enqueue(event);
         verify(c2).enqueue(event);
     }

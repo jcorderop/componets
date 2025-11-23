@@ -12,6 +12,7 @@ class JsonUtilTest {
 
     @Test
     void toJsonSerializesPojo() {
+        // given
         MarketDataMessage msg = MarketDataMessage.builder()
                 .source("demo")
                 .symbol("BOND1")
@@ -20,8 +21,10 @@ class JsonUtilTest {
                 .timestamp(Instant.parse("2024-01-01T00:00:00Z"))
                 .build();
 
+        // when
         String json = JsonUtil.toJson(msg);
 
+        // then
         assertNotNull(json);
         assertTrue(json.contains("\"symbol\":\"BOND1\""));
         assertTrue(json.contains("\"timestamp\":\"2024-01-01T00:00:00Z\""));

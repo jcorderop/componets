@@ -22,8 +22,10 @@ class HazelcastBufferThrottleTest {
 
         HazelcastBufferThrottle<String> throttle = new HazelcastBufferThrottle<>(buffer, adapter);
 
+        // when
         throttle.runThrottled();
 
+        // then
         verify(buffer).isEmpty();
         verifyNoMoreInteractions(buffer, adapter);
     }
@@ -40,8 +42,10 @@ class HazelcastBufferThrottleTest {
 
         HazelcastBufferThrottle<String> throttle = new HazelcastBufferThrottle<>(buffer, adapter);
 
+        // when
         throttle.runThrottled();
 
+        // then
         verify(buffer).isEmpty();
         verify(buffer).releaseBuffer();
         verify(adapter).send(Map.of("k1", "v1", "k2", "v2"));
@@ -60,8 +64,10 @@ class HazelcastBufferThrottleTest {
 
         HazelcastBufferThrottle<String> throttle = new HazelcastBufferThrottle<>(buffer, adapter);
 
+        // when
         throttle.runThrottled();
 
+        // then
         verify(buffer).releaseBuffer();
         verify(adapter).send(anyMap());
     }

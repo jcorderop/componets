@@ -55,17 +55,24 @@ class HazelcastCacheAdapterTest {
 
     @Test
     void sendRequiresEntries() {
+        // given
         HazelcastCacheAdapter<MarketDataMessage> a = adapter();
+
+        // when
+        // then
         assertThrows(IllegalArgumentException.class, () -> a.send(null));
         assertThrows(IllegalArgumentException.class, () -> a.send(Map.of()));
     }
 
     @Test
     void sendHappyPathWritesJsonToHazelcast() {
+        // given
         HazelcastCacheAdapter<MarketDataMessage> a = adapter();
 
+        // when
         a.send(Map.of("cache-1", msg()));
 
+        // then
         String json = map.get("cache-1");
         assertNotNull(json);
         assertTrue(json.contains("\"symbol\":\"TEST\""));
@@ -74,13 +81,16 @@ class HazelcastCacheAdapterTest {
 
     @Test
     void sendSkipsInvalidEntries() {
+        // given
         HazelcastCacheAdapter<MarketDataMessage> a = adapter();
 
+        // when
         a.send(Map.of(
                 "", msg(),
                 "valid", msg()
         ));
 
+        // then
         assertFalse(map.containsKey(""));
         assertTrue(map.containsKey("valid"));
     }
@@ -96,9 +106,10 @@ class HazelcastCacheAdapterTest {
      *  1) Start two Hazelcast members
      *  2) Use one as client and kill the *other* member during putAll
      *  3) Hazelcast throws RetryableHazelcastException (cluster instability)
-     */
+    */
     @Test
     void hazelcastInstanceNotActiveExceptionBecomesConsumerRuntimeException() throws InterruptedException {
+        // given
         HazelcastCacheAdapter<MarketDataMessage> a =
                 new HazelcastCacheAdapter<>(hz, "market-cache");
 
@@ -106,6 +117,8 @@ class HazelcastCacheAdapterTest {
         Thread.sleep(2_000);
 
         // Cluster instability begins → write will trigger RetryableHazelcastException
+        // when
+        // then
         assertThrows(ConsumerRuntimeException.class,
                 () -> a.send(Map.of("k1", msg())));
     }
@@ -121,12 +134,15 @@ class HazelcastCacheAdapterTest {
     @Test
     void nonRetryableHazelcastExceptionBecomesConsumerRuntimeException() {
 
+        // given
         HazelcastCacheAdapter<MarketDataMessage> a =
                 new HazelcastCacheAdapter<>(hz, "market-cache");
 
         // Kill Hazelcast → Local instance is dead → non-retryable exception on map.putAll()
         hz.shutdown();
 
+        // when
+        // then
         assertThrows(ConsumerRuntimeException.class,
                 () -> a.send(Map.of("kX", msg())));
     }
