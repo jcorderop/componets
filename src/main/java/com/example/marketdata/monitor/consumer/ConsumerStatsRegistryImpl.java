@@ -45,7 +45,15 @@ public class ConsumerStatsRegistryImpl implements ConsumerStatsRegistry {
 
     @Override
     public void recordDrop(String consumerName) {
-        getBucket(consumerName).eventsDropped.increment();
+        recordDrops(consumerName, 1);
+    }
+
+    @Override
+    public void recordDrops(String consumerName, int dropCount) {
+        if (dropCount <= 0) {
+            return;
+        }
+        getBucket(consumerName).eventsDropped.add(dropCount);
     }
 
     @Override
