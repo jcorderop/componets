@@ -1,4 +1,4 @@
-package com.example.hazelcastclient.model;
+package com.example.marketdata.model;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

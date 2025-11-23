@@ -1,4 +1,4 @@
-package com.example.adapter;
+package com.example.marketdata.adapter;
 
 
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.example.hazelcastclient.config;
+package com.example.marketdata.adapter.hazelcast.config;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;

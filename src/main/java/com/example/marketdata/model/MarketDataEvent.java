@@ -1,6 +1,8 @@
 package com.example.marketdata.model;
 
-import com.example.hazelcastclient.model.IJsonDto;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public interface MarketDataEvent extends IJsonDto {
+    @JsonIgnore
+    String getCacheId();
 }

@@ -1,6 +1,6 @@
-package com.example.handler;
+package com.example.marketdata.adapter.hazelcast.handler;
 
-import com.example.cache.MarketDataBuffer;
+import com.example.marketdata.cache.MarketDataBuffer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ public class MarketDataBufferHandler<T> {
         }
 
         marketDataBuffer.put(key, value);
-        log.debug("Buffered market data for key {}", key);
+        log.info("Buffered market data for key {}", key);
     }
 
     /**
@@ -36,6 +36,7 @@ public class MarketDataBufferHandler<T> {
      */
     public void handleAll(final Map<String, T> entries) {
         if (entries == null || entries.isEmpty()) {
+            log.error("Ignoring market data: no entries to buffer");
             return;
         }
         entries.forEach(this::handle);

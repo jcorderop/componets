@@ -1,4 +1,4 @@
-package com.example.cache;
+package com.example.marketdata.cache;
 
 import org.springframework.stereotype.Component;
 

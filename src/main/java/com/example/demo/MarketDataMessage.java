@@ -17,4 +17,9 @@ public class MarketDataMessage implements MarketDataEvent {
     private double price;
     private long size;
     private Instant timestamp;   // event time
+
+    @Override
+    public String getCacheId() {
+        return symbol;
+    }
 }

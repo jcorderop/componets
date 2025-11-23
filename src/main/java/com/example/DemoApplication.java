@@ -7,10 +7,12 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.time.Instant;
 
 @SpringBootApplication
+@EnableScheduling
 public class DemoApplication {
 
     public static void main(String[] args) {
@@ -20,11 +22,13 @@ public class DemoApplication {
     @Bean
     public ApplicationRunner marketDataStartupPublisher(MarketDataHandlerService marketDataHandlerService) {
         return args -> {
+            double price = 1.0;
             for (int i = 0; i < 100; i++) {
+                price = price + (i/10.0);
                 MarketDataEvent event = MarketDataMessage.builder()
                         .source("MAX")
                         .symbol("IBM")
-                        .price(1.25)
+                        .price(price)
                         .size(1_000_000)
                         .timestamp(Instant.now())
                         .build();

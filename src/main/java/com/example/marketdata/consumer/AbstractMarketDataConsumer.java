@@ -1,7 +1,8 @@
 package com.example.marketdata.consumer;
 
+import com.example.marketdata.exception.ConsumerRetryableException;
 import com.example.marketdata.config.MarketDataConsumerProperties;
-import com.example.marketdata.model.MarketDataConsumerBatchDequeue;
+import com.example.marketdata.model.MarketDataConsumerBatchProcessor;
 import com.example.marketdata.model.MarketDataEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.SmartLifecycle;
@@ -12,7 +13,7 @@ import java.util.concurrent.*;
 
 @Slf4j
 public abstract class AbstractMarketDataConsumer
-        implements MarketDataConsumerBatchDequeue, SmartLifecycle {
+        implements MarketDataConsumerBatchProcessor, SmartLifecycle {
 
     private final BlockingQueue<MarketDataEvent> queue;
     private final int batchSize;
@@ -81,7 +82,7 @@ public abstract class AbstractMarketDataConsumer
     }
 
     private void runLoop() {
-        List<MarketDataEvent> batch = new ArrayList<>(batchSize);
+        final List<MarketDataEvent> batch = new ArrayList<>(batchSize);
 
         try {
             while (running && !Thread.currentThread().isInterrupted()) {
@@ -89,20 +90,16 @@ public abstract class AbstractMarketDataConsumer
                 MarketDataEvent first = queue.poll(pollTimeoutMillis, TimeUnit.MILLISECONDS);
 
                 if (first == null) {
-                    // No data; simply continue
                     continue;
                 }
 
                 batch.clear();
                 batch.add(first);
-
-                // Drain up to batchSize - 1 without waiting too long
                 queue.drainTo(batch, batchSize - 1);
 
-                try {
-                    dequeueBatch(batch);
-                } catch (Exception e) {
-                    log.error("Error processing batch in consumer {}: {}", getConsumerName(), e.getMessage(), e);
+                boolean processed = false;
+                while (!processed && running && !Thread.currentThread().isInterrupted()) {
+                    processed = executeProcessor(batch);
                 }
             }
         } catch (InterruptedException e) {
@@ -110,4 +107,26 @@ public abstract class AbstractMarketDataConsumer
             log.info("Consumer {} interrupted", getConsumerName());
         }
     }
+
+    private boolean executeProcessor(List<MarketDataEvent> batch) {
+        boolean processed = false;
+        try {
+            processBatch(batch);
+            processed = true;
+        } catch (ConsumerRetryableException e) {
+            log.warn("Retryable error in consumer {}: {}. Will retry batch.", getConsumerName(), e.getMessage(), e);
+            try {
+                Thread.sleep(1_000L);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                log.info("Consumer {} interrupted during retry sleep", getConsumerName());
+            }
+        } catch (Exception e) {
+            // Non-retryable: log and drop this batch, continue with next
+            log.error("Non-retryable error in consumer {}: {}. Dropping batch.", getConsumerName(), e.getMessage(), e);
+            processed = true;
+        }
+        return processed;
+    }
+
 }

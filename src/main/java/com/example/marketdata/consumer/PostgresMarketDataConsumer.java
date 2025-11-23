@@ -1,7 +1,6 @@
-package com.example.demo;
+package com.example.marketdata.consumer;
 
 import com.example.marketdata.config.MarketDataConsumerProperties;
-import com.example.marketdata.consumer.AbstractMarketDataConsumer;
 import com.example.marketdata.model.MarketDataEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,6 +13,7 @@ public class PostgresMarketDataConsumer extends AbstractMarketDataConsumer {
 
     public PostgresMarketDataConsumer(final MarketDataConsumerProperties props) {
         super(props);
+        log.info("Created Postgres consumer");
     }
 
     @Override
@@ -22,7 +22,14 @@ public class PostgresMarketDataConsumer extends AbstractMarketDataConsumer {
     }
 
     @Override
-    public void dequeueBatch(List<MarketDataEvent> batch) {
-        log.info("PostgreSQL consumer processing batch of size {}", batch.size());
+    public void processBatch(List<MarketDataEvent> batch) {
+        try {
+            log.info("Postgres consumer processing batch of size {}", batch.size());
+            //} catch (IOException | TimeoutException e) {
+            // transient problem → retry
+            //    throw new ConsumerRetryableException("Temporary failure talking to service", e);
+        } catch (Exception e) {
+            throw e;
+        }
     }
 }

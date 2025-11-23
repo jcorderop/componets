@@ -1,6 +1,6 @@
 package com.example.cache;
 
-import com.example.adapter.hazelcast.HazelcastCacheAdapter;
+import com.example.marketdata.adapter.hazelcast.HazelcastCacheAdapter;
 import com.example.demo.MarketDataMessage;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
