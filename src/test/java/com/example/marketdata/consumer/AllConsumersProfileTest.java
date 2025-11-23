@@ -35,10 +35,10 @@ class AllConsumersProfileTest {
         // given
 
         // when
+        // then
         assertNotNull(marketDataHandlerService, "MarketDataHandlerService should be present");
         assertEquals(6, consumers.size(), "All six conditional consumers should load");
 
-        // then
         assertTrue(consumers.stream().anyMatch(HazelcastMarketDataConsumer.class::isInstance));
         assertTrue(consumers.stream().anyMatch(KafkaMarketDataConsumer.class::isInstance));
         assertTrue(consumers.stream().anyMatch(PostgresMarketDataConsumer.class::isInstance));

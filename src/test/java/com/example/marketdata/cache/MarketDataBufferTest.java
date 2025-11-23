@@ -79,11 +79,14 @@ class MarketDataBufferTest {
         @SuppressWarnings("unchecked")
         MarketDataBuffer<String> buffer = mock(MarketDataBuffer.class);
 
+        // given
         MarketDataBufferHandler<String> handler = new MarketDataBufferHandler<>(buffer);
 
+        // when
         handler.handle(null, "v1");
         handler.handle("   ", "v2");
 
+        // then
         verifyNoInteractions(buffer);
     }
 
@@ -92,10 +95,13 @@ class MarketDataBufferTest {
         @SuppressWarnings("unchecked")
         MarketDataBuffer<String> buffer = mock(MarketDataBuffer.class);
 
+        // given
         MarketDataBufferHandler<String> handler = new MarketDataBufferHandler<>(buffer);
 
+        // when
         handler.handle("k1", null);
 
+        // then
         verifyNoInteractions(buffer);
     }
 }

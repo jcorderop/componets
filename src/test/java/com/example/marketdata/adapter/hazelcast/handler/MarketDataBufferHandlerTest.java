@@ -18,6 +18,7 @@ class MarketDataBufferHandlerTest {
         @SuppressWarnings("unchecked")
         MarketDataBuffer<String> buffer = mock(MarketDataBuffer.class);
 
+        // given
         MarketDataBufferHandler<String> handler = new MarketDataBufferHandler<>(buffer);
 
         // when
@@ -32,6 +33,7 @@ class MarketDataBufferHandlerTest {
         @SuppressWarnings("unchecked")
         MarketDataBuffer<String> buffer = mock(MarketDataBuffer.class);
 
+        // given
         MarketDataBufferHandler<String> handler = new MarketDataBufferHandler<>(buffer);
 
         // when
@@ -47,6 +49,7 @@ class MarketDataBufferHandlerTest {
         @SuppressWarnings("unchecked")
         MarketDataBuffer<String> buffer = mock(MarketDataBuffer.class);
 
+        // given
         MarketDataBufferHandler<String> handler = new MarketDataBufferHandler<>(buffer);
 
         // when

@@ -31,18 +31,22 @@ class AbstractMarketDataConsumerTest {
 
     @Test
     void enqueueDropsNullAndEventsWhenNotRunning() {
+        // given
         MarketDataConsumerProperties props = baseProps();
         TestConsumer consumer = new TestConsumer(props, statsRegistry, 0);
 
+        // when
         consumer.enqueue(null);
         consumer.enqueue(sampleEvent());
 
+        // then
         assertThat(statsRegistry.enqueues).isEqualTo(2);
         assertThat(statsRegistry.drops).isEqualTo(2);
     }
 
     @Test
     void enqueueDropsWhenQueueIsFull() throws Exception {
+        // given
         MarketDataConsumerProperties props = baseProps();
         props.setQueueCapacity(1);
         TestConsumer consumer = new TestConsumer(props, statsRegistry, 0);
@@ -52,14 +56,17 @@ class AbstractMarketDataConsumerTest {
 
         setRunning(consumer, true);
 
+        // when
         consumer.enqueue(sampleEvent());
 
+        // then
         assertThat(statsRegistry.enqueues).isEqualTo(1);
         assertThat(statsRegistry.drops).isEqualTo(1);
     }
 
     @Test
     void retriesAreTrackedUntilBatchSucceeds() throws InterruptedException {
+        // given
         MarketDataConsumerProperties props = baseProps();
         props.setInitialRetryBackoffMillis(1);
         props.setMaxRetryBackoffMillis(2);
@@ -68,10 +75,12 @@ class AbstractMarketDataConsumerTest {
         CountDownLatch processed = new CountDownLatch(1);
         TestConsumer consumer = new TestConsumer(props, statsRegistry, 2, processed);
 
+        // when
         consumer.start();
         try {
             consumer.enqueue(sampleEvent());
 
+            // then
             assertThat(processed.await(2, TimeUnit.SECONDS)).isTrue();
             assertThat(statsRegistry.batchProcessed).isEqualTo(1);
             assertThat(statsRegistry.drops).isZero();
@@ -187,6 +196,7 @@ class AbstractMarketDataConsumerTest {
 
     @Test
     void nonRetryableErrorDropsBatch() throws InterruptedException {
+        // given
         MarketDataConsumerProperties props = baseProps();
         CountDownLatch latch = new CountDownLatch(1);
 
@@ -203,12 +213,14 @@ class AbstractMarketDataConsumerTest {
             }
         };
 
+        // when
         consumer.start();
         try {
             consumer.enqueue(sampleEvent());
             // Give the consumer loop some time
             TimeUnit.MILLISECONDS.sleep(100);
 
+            // then
             assertThat(statsRegistry.drops).isEqualTo(1);
             assertThat(statsRegistry.batchProcessed).isZero();
         } finally {
