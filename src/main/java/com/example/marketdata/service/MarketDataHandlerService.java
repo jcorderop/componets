@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Coordinates incoming market data events and dispatches them to all configured consumers.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

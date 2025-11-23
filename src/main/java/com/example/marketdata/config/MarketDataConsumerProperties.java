@@ -4,6 +4,26 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+/**
+ * Configuration properties that control consumer queue sizing, batching, and retry behavior
+ * for processing inbound market data.
+ * <p>
+ * Properties (all under {@code marketdata.default}) and how they are applied:
+ * <ul>
+ *     <li>{@code queue-capacity} (default: {@code 1000000}) – maximum number of events the
+ *     consumer queue can hold before producers start dropping new events.</li>
+ *     <li>{@code batch-size} (default: {@code 1000}) – number of events drained from the
+ *     queue before invoking {@link com.example.marketdata.model.MarketDataConsumerBatchProcessor#processBatch}.</li>
+ *     <li>{@code poll-timeout-millis} (default: {@code 10}) – how long the consumer waits for
+ *     additional events before flushing a partially full batch.</li>
+ *     <li>{@code initial-retry-backoff-millis} (default: {@code 1000}) – first sleep duration
+ *     when a batch fails with a retryable exception.</li>
+ *     <li>{@code max-retry-backoff-millis} (default: {@code 10000}) – upper bound for the retry
+ *     backoff between successive failures of the same batch.</li>
+ *     <li>{@code retry-backoff-multiplier} (default: {@code 2.0}) – multiplier applied after each
+ *     retry to achieve exponential backoff.</li>
+ * </ul>
+ */
 @Data
 @Component
 @ConfigurationProperties(prefix = "marketdata.default")

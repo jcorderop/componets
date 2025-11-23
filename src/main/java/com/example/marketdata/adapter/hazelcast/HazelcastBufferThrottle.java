@@ -8,6 +8,16 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+/**
+ * Scheduled throttle that periodically drains the in-memory market data buffer into
+ * the Hazelcast cache adapter, protecting downstream systems from bursts.
+ *
+ * <p>Properties:
+ * <ul>
+ *     <li>{@code marketdata.throttle.interval-ms} (default: {@code 30000}) – interval in milliseconds
+ *     between buffer flushes.</li>
+ * </ul>
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

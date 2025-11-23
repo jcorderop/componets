@@ -6,6 +6,10 @@ import com.hazelcast.core.HazelcastInstance;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Spring configuration that provisions the Hazelcast instance used by adapters and buffers
+ * to store market data snapshots.
+ */
 @Configuration
 public class HazelcastConfiguration {
 

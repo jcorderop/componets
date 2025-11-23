@@ -11,6 +11,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.time.Instant;
 
+/**
+ * Spring Boot entry point that wires the demo application and triggers event publication
+ * on startup so downstream consumers receive a steady stream of sample market data.
+ */
 @SpringBootApplication
 @EnableScheduling
 public class DemoApplication {

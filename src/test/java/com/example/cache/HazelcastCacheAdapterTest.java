@@ -18,6 +18,9 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Integration tests that exercise the Hazelcast cache adapter against a real cluster.
+ */
 class HazelcastCacheAdapterIT {
 
     private HazelcastInstance hazelcastInstance;

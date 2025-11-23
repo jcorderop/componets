@@ -7,6 +7,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Simple {@link ConsumerStatsSink} that renders each snapshot to the application logs. It is
+ * useful for diagnostics or environments where a lightweight reporting mechanism is sufficient.
+ */
 @Slf4j
 @Service
 public class ConsumerStatsSinkLoggerService implements ConsumerStatsSink {

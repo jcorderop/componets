@@ -14,6 +14,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Exercises Hazelcast adapter validation, shadow cache behavior, and retry classification.
+ */
 class HazelcastCacheAdapterTest {
 
     private HazelcastInstance hz;

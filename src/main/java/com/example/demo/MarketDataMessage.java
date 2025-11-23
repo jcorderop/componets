@@ -7,6 +7,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Simple market data payload used by the demo to drive consumer pipelines and cache updates.
+ */
 @Data
 @Builder
 @NoArgsConstructor

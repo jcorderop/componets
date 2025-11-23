@@ -21,6 +21,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Adapter that serializes market data payloads to JSON and persists them into a Hazelcast
+ * map, while keeping a local shadow cache to support reconnection scenarios.
+ * <p>
+ * Uses {@code marketdata.hazelcast.cache-name} (default {@code default-name}) to determine which
+ * Hazelcast map to update and retain a matching shadow cache for reconnection flows.
+ */
 @Slf4j
 @Component
 public class HazelcastCacheAdapter<T> implements BaseAdapter<T> {

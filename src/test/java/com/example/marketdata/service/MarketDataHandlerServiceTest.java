@@ -11,6 +11,9 @@ import java.util.List;
 
 import static org.mockito.Mockito.*;
 
+/**
+ * Verifies that the handler dispatches every inbound event to all registered consumers.
+ */
 class MarketDataHandlerServiceTest {
 
     @Test

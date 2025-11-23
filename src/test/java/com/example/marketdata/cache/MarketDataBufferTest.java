@@ -7,6 +7,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Validates buffer insertion, emptiness checks, and atomic draining semantics.
+ */
 class MarketDataBufferTest {
 
     @Test

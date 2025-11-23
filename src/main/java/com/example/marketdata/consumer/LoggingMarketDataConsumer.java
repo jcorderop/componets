@@ -9,6 +9,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Consumer that simply logs each batch for inspection, useful for local debugging.
+ * <p>
+ * Activated when {@code marketdata.consumers.logging.enabled=true} and inherits queue, batch,
+ * and retry tuning from {@code marketdata.default.*}.
+ */
 @Slf4j
 @Component
 @ConditionalOnProperty(

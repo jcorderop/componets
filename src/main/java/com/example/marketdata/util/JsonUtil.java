@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+/**
+ * Utility for serializing objects to JSON with consistent time handling.
+ */
 public final class JsonUtil {
 
     // Single shared, thread-safe ObjectMapper

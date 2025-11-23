@@ -14,6 +14,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Consumer that batches market data events and stages them for Hazelcast updates via the
+ * buffer handler and throttle.
+ * <p>
+ * Enabled when {@code marketdata.consumers.hazelcast.enabled=true}. Inherits batching and
+ * backoff tuning from {@code marketdata.default.*} and relies on {@code marketdata.throttle.interval-ms}
+ * to schedule buffer flushes.
+ */
 @Slf4j
 @Component
 @ConditionalOnProperty(

@@ -8,6 +8,9 @@ import java.util.Map;
 
 import static org.mockito.Mockito.*;
 
+/**
+ * Ensures the buffer handler validates and forwards entries to the underlying buffer.
+ */
 class MarketDataBufferHandlerTest {
 
     @Test

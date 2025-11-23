@@ -15,6 +15,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Confirms that enabling the "all-consumers" profile activates every conditional consumer
+ * and wires the handler with the complete list.
+ */
 @SpringBootTest
 @ActiveProfiles("all-consumers")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

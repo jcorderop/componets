@@ -9,6 +9,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Stub consumer representing a PostgreSQL destination for processed market data batches.
+ * <p>
+ * Activated when {@code marketdata.consumers.postgres.enabled=true} and inherits queue,
+ * batch, and retry tuning from {@code marketdata.default.*}.
+ */
 @Slf4j
 @Component
 @ConditionalOnProperty(
