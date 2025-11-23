@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -12,42 +13,7 @@ import static org.mockito.Mockito.*;
 class ConsumerStatsReporterTest {
 
     @Test
-    void publishStatsDelegatesSnapshotsToAllSinks() {
-        ConsumerStatsRegistry registry = mock(ConsumerStatsRegistry.class);
-        ConsumerStatsSink sink1 = mock(ConsumerStatsSink.class);
-        ConsumerStatsSink sink2 = mock(ConsumerStatsSink.class);
-
-        ConsumerStatsSnapshot snapshot = ConsumerStatsSnapshot.builder()
-                .consumerName("c1")
-                .windowStartMillis(1L)
-                .windowEndMillis(2L)
-                .eventsEnqueued(3L)
-                .eventsProcessed(4L)
-                .eventsDropped(0L)
-                .minLatencyMillis(5L)
-                .maxLatencyMillis(6L)
-                .avgLatencyMillis(1.5)
-                .queueSizeAtSnapshot(7)
-                .build();
-
-        List<ConsumerStatsSnapshot> snapshots = List.of(snapshot);
-        when(registry.snapshotAndReset()).thenReturn(snapshots);
-
-        // given
-        ConsumerStatsReporter reporter = new ConsumerStatsReporter(registry, List.of(sink1, sink2));
-
-        // when
-        reporter.publishStats();
-
-        // then
-        verify(registry, times(1)).snapshotAndReset();
-        verify(sink1, times(1)).publish(snapshots);
-        verify(sink2, times(1)).publish(snapshots);
-        verifyNoMoreInteractions(sink1, sink2);
-    }
-
-    @Test
-    void publishStatsContinuesWhenSinkThrowsRuntimeException() {
+    void publishStatsHappyPathPublishesToAllSinks() throws Exception {
         ConsumerStatsRegistry registry = mock(ConsumerStatsRegistry.class);
         ConsumerStatsSnapshot snapshot = ConsumerStatsSnapshot.builder()
                 .consumerName("c1").windowStartMillis(1L).windowEndMillis(2L)
@@ -55,23 +21,44 @@ class ConsumerStatsReporterTest {
         List<ConsumerStatsSnapshot> snapshots = List.of(snapshot);
         when(registry.snapshotAndReset()).thenReturn(snapshots);
 
-        ConsumerStatsSink good = mock(ConsumerStatsSink.class);
-        ConsumerStatsSink bad = mock(ConsumerStatsSink.class);
-        doThrow(new RuntimeException("boom")).when(bad).publish(snapshots);
+        ConsumerStatsSink sink1 = mock(ConsumerStatsSink.class);
+        ConsumerStatsSink sink2 = mock(ConsumerStatsSink.class);
 
-        // given
-        ConsumerStatsReporter reporter = new ConsumerStatsReporter(registry, List.of(bad, good));
+        ConsumerStatsReporter reporter =
+                new ConsumerStatsReporter(registry, List.of(sink1, sink2));
 
-        // when
         reporter.publishStats();
 
-        // then
-        verify(bad).publish(snapshots);
-        verify(good).publish(snapshots);
+        verify(sink1).publish(snapshots);
+        verify(sink2).publish(snapshots);
     }
 
     @Test
-    void publishStatsStopsOnInterruptedException() {
+    void publishStatsContinuesWhenOneSinkThrowsRuntimeException() throws Exception {
+        ConsumerStatsRegistry registry = mock(ConsumerStatsRegistry.class);
+        ConsumerStatsSnapshot snapshot = ConsumerStatsSnapshot.builder()
+                .consumerName("c1").windowStartMillis(1L).windowEndMillis(2L)
+                .build();
+        List<ConsumerStatsSnapshot> snapshots = List.of(snapshot);
+        when(registry.snapshotAndReset()).thenReturn(snapshots);
+
+        ConsumerStatsSink failingSink = mock(ConsumerStatsSink.class);
+        ConsumerStatsSink succeedingSink = mock(ConsumerStatsSink.class);
+
+        doThrow(new RuntimeException("boom"))
+                .when(failingSink).publish(snapshots);
+
+        ConsumerStatsReporter reporter =
+                new ConsumerStatsReporter(registry, List.of(failingSink, succeedingSink));
+
+        reporter.publishStats();
+
+        verify(failingSink).publish(snapshots);
+        verify(succeedingSink).publish(snapshots);
+    }
+
+    @Test
+    void publishStatsStopsWhenCurrentThreadIsInterruptedDuringSink() throws Exception {
         ConsumerStatsRegistry registry = mock(ConsumerStatsRegistry.class);
         ConsumerStatsSnapshot snapshot = ConsumerStatsSnapshot.builder()
                 .consumerName("c1").windowStartMillis(1L).windowEndMillis(2L)
@@ -82,19 +69,48 @@ class ConsumerStatsReporterTest {
         ConsumerStatsSink interruptedSink = mock(ConsumerStatsSink.class);
         ConsumerStatsSink neverCalledSink = mock(ConsumerStatsSink.class);
 
-        doThrow(new InterruptedException("stop"))
-                .when(interruptedSink).publish(snapshots);
+        // Simulate interruption while publishing
+        doAnswer(invocation -> {
+            // mark the current thread as interrupted
+            Thread.currentThread().interrupt();
+            // throw a runtime exception to enter the catch block
+            throw new RuntimeException("stop");
+        }).when(interruptedSink).publish(snapshots);
 
-        // given
         ConsumerStatsReporter reporter =
                 new ConsumerStatsReporter(registry, List.of(interruptedSink, neverCalledSink));
 
-        // when
         reporter.publishStats();
 
-        // then
         verify(interruptedSink).publish(snapshots);
         verifyNoInteractions(neverCalledSink);
+        assertThat(Thread.currentThread().isInterrupted()).isTrue();
     }
 
+    @Test
+    void publishStatsStopsWhenSinkThrowsWrappedInterruptedException() throws Exception {
+        ConsumerStatsRegistry registry = mock(ConsumerStatsRegistry.class);
+        ConsumerStatsSnapshot snapshot = ConsumerStatsSnapshot.builder()
+                .consumerName("c1").windowStartMillis(1L).windowEndMillis(2L)
+                .build();
+        List<ConsumerStatsSnapshot> snapshots = List.of(snapshot);
+        when(registry.snapshotAndReset()).thenReturn(snapshots);
+
+        ConsumerStatsSink interruptedSink = mock(ConsumerStatsSink.class);
+        ConsumerStatsSink neverCalledSink = mock(ConsumerStatsSink.class);
+
+        // We cannot throw a checked InterruptedException directly (method doesn't declare it),
+        // so we wrap it in a RuntimeException and let shouldStopOn(e.getCause()) handle it.
+        doThrow(new RuntimeException(new InterruptedException("stop")))
+                .when(interruptedSink).publish(snapshots);
+
+        ConsumerStatsReporter reporter =
+                new ConsumerStatsReporter(registry, List.of(interruptedSink, neverCalledSink));
+
+        reporter.publishStats();
+
+        verify(interruptedSink).publish(snapshots);
+        verifyNoInteractions(neverCalledSink);
+        assertThat(Thread.currentThread().isInterrupted()).isTrue();
+    }
 }

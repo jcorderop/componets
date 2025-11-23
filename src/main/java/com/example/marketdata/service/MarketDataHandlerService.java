@@ -13,10 +13,13 @@ import java.util.List;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MarketDataHandlerService {
 
     private final List<AbstractMarketDataConsumer> consumers;
+
+    public MarketDataHandlerService(List<AbstractMarketDataConsumer> consumers) {
+        this.consumers = List.copyOf(consumers);
+    }
 
     public void onEvent(final MarketDataEvent event) {
         log.debug("Received event {}", event);
