@@ -40,8 +40,7 @@ class HazelcastCacheAdapterIT {
     @Test
     void updateWritesJsonPayload_withRealHazelcast() {
         // given
-        HazelcastCacheAdapter cacheAdapter =
-                new HazelcastCacheAdapter(hazelcastInstance, "market-cache");
+        HazelcastCacheAdapter cacheAdapter = new HazelcastCacheAdapter(hazelcastInstance, "market-cache");
 
         MarketDataMessage message = MarketDataMessage.builder()
                 .source("demo")

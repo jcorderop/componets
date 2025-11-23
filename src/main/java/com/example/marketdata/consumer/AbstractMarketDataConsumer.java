@@ -4,6 +4,7 @@ import com.example.marketdata.config.MarketDataConsumerProperties;
 import com.example.marketdata.exception.ConsumerRetryableException;
 import com.example.marketdata.model.MarketDataConsumerBatchProcessor;
 import com.example.marketdata.model.MarketDataEvent;
+import com.example.marketdata.monitor.consumer.ConsumerStatsRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.SmartLifecycle;
 
@@ -21,14 +22,18 @@ public abstract class AbstractMarketDataConsumer
     private final MarketDataConsumerProperties props;
     private final BlockingQueue<MarketDataEvent> queue;
     private final ExecutorService consumerExecutor;
+    private final ConsumerStatsRegistry consumerStatsRegistry;
 
     private volatile boolean running = false;
 
-    protected AbstractMarketDataConsumer(final MarketDataConsumerProperties props) {
+
+    protected AbstractMarketDataConsumer(final MarketDataConsumerProperties props,
+                                         final ConsumerStatsRegistry consumerStatsRegistry) {
         this.props = props;
         this.queue = new ArrayBlockingQueue<>(props.getQueueCapacity());
         this.consumerExecutor = Executors.newSingleThreadExecutor(r ->
                 new Thread(r, getConsumerName() + "-consumer-thread"));
+        this.consumerStatsRegistry = consumerStatsRegistry;
     }
 
     // ------------------------------------------------------------------------
@@ -81,13 +86,16 @@ public abstract class AbstractMarketDataConsumer
     // ------------------------------------------------------------------------
 
     public void enqueue(final MarketDataEvent event) {
+        consumerStatsRegistry.recordEnqueue(getConsumerName());
         if (event == null) {
             log.warn("Ignoring null event for consumer {}", getConsumerName());
+            consumerStatsRegistry.recordDrop(getConsumerName());
             return;
         }
 
         if (!running) {
             log.warn("Consumer {} is not running; dropping event {}", getConsumerName(), event);
+            consumerStatsRegistry.recordDrop(getConsumerName());
             return;
         }
 
@@ -95,6 +103,7 @@ public abstract class AbstractMarketDataConsumer
         if (!offered) {
             log.error("Queue is full for consumer {} (capacity={}); dropping event {}",
                     getConsumerName(), props.getQueueCapacity(), event);
+            consumerStatsRegistry.recordDrop(getConsumerName());
         }
     }
 
@@ -110,6 +119,7 @@ public abstract class AbstractMarketDataConsumer
 
         try {
             while (running && !Thread.currentThread().isInterrupted()) {
+                consumerStatsRegistry.recordQueueSize(getConsumerName(), queue.size());
 
                 MarketDataEvent first = queue.poll(pollTimeoutMillis, TimeUnit.MILLISECONDS);
                 if (first == null) {
@@ -121,52 +131,66 @@ public abstract class AbstractMarketDataConsumer
 
                 queue.drainTo(batch, batchSize - 1);
 
-                // Retry loop for this batch with progressive backoff
-                boolean processed = false;
-                long backoff = props.getInitialRetryBackoffMillis();
-                final long maxBackoff = props.getMaxRetryBackoffMillis();
-                final double multiplier = props.getRetryBackoffMultiplier();
-
-                while (!processed && running && !Thread.currentThread().isInterrupted()) {
-                    try {
-                        processBatch(batch);
-                        processed = true; // success -> exit retry loop
-
-                    } catch (ConsumerRetryableException e) {
-                        log.warn("Retryable error in consumer {}: {}. Will retry batch after {} ms.",
-                                getConsumerName(), e.getMessage(), backoff, e);
-
-                        // Sleep with current backoff
-                        if (backoff > 0) {
-                            try {
-                                Thread.sleep(backoff);
-                            } catch (InterruptedException ie) {
-                                Thread.currentThread().interrupt();
-                                log.info("Consumer {} interrupted during retry sleep", getConsumerName());
-                                // allow outer loop to exit
-                                break;
-                            }
-                        }
-
-                        // Increase backoff for next retry
-                        if (multiplier > 1.0 && maxBackoff > 0) {
-                            backoff = Math.min((long) (backoff * multiplier), maxBackoff);
-                        }
-
-                    } catch (Exception e) {
-                        // Non-retryable: log and drop this batch, continue with next
-                        log.error("Non-retryable error in consumer {}: {}. Dropping batch.",
-                                getConsumerName(), e.getMessage(), e);
-                        processed = true;
-                    }
-                }
+                executeProcessor(batch);
             }
-
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.info("Consumer {} interrupted", getConsumerName());
         } finally {
             log.info("Exiting consumer loop for {}", getConsumerName());
+        }
+    }
+
+    private void executeProcessor(final List<MarketDataEvent> batch) {
+        // Retry loop for this batch with progressive backoff
+        boolean processed = false;
+        long backoff = props.getInitialRetryBackoffMillis();
+        final long maxBackoff = props.getMaxRetryBackoffMillis();
+        final double multiplier = props.getRetryBackoffMultiplier();
+        final long startNanos = System.nanoTime();
+
+        while (!processed && running && !Thread.currentThread().isInterrupted()) {
+            try {
+                processBatch(batch);
+                processed = true; // success -> exit retry loop
+
+                long elapsedMillis =
+                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+
+                // stats: batch processed successfully
+                consumerStatsRegistry.recordBatchProcessed(
+                        getConsumerName(),
+                        batch.size(),
+                        elapsedMillis
+                );
+
+            } catch (ConsumerRetryableException e) {
+                log.warn("Retryable error in consumer {}: {}. Will retry batch after {} ms.",
+                        getConsumerName(), e.getMessage(), backoff, e);
+
+                // Sleep with current backoff
+                if (backoff > 0) {
+                    try {
+                        Thread.sleep(backoff);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        log.info("Consumer {} interrupted during retry sleep", getConsumerName());
+                        // allow outer loop to exit
+                        break;
+                    }
+                }
+
+                // Increase backoff for next retry
+                if (multiplier > 1.0 && maxBackoff > 0) {
+                    backoff = Math.min((long) (backoff * multiplier), maxBackoff);
+                }
+
+            } catch (Exception e) {
+                // Non-retryable: log and drop this batch, continue with next
+                log.error("Non-retryable error in consumer {}: {}. Dropping batch.",
+                        getConsumerName(), e.getMessage(), e);
+                processed = true;
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import com.example.marketdata.adapter.hazelcast.HazelcastBufferThrottle;
 import com.example.marketdata.adapter.hazelcast.handler.MarketDataBufferHandler;
 import com.example.marketdata.config.MarketDataConsumerProperties;
 import com.example.marketdata.model.MarketDataEvent;
+import com.example.marketdata.monitor.consumer.ConsumerStatsRegistry;
 import com.example.marketdata.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,9 +28,10 @@ public class HazelcastMarketDataConsumer<T> extends AbstractMarketDataConsumer {
     final HazelcastBufferThrottle<T> hazelcastBufferThrottle;
 
     public HazelcastMarketDataConsumer(final MarketDataConsumerProperties props,
+                                       final ConsumerStatsRegistry consumerStatsRegistry,
                                        final MarketDataBufferHandler<T> marketDataBufferHandler,
                                        final HazelcastBufferThrottle<T> hazelcastBufferThrottle) {
-        super(props);
+        super(props, consumerStatsRegistry);
         this.marketDataBufferHandler = marketDataBufferHandler;
         this.hazelcastBufferThrottle = hazelcastBufferThrottle;
         log.info("Created Hazelcast consumer");

@@ -2,6 +2,7 @@ package com.example.marketdata.consumer;
 
 import com.example.marketdata.config.MarketDataConsumerProperties;
 import com.example.marketdata.model.MarketDataEvent;
+import com.example.marketdata.monitor.consumer.ConsumerStatsRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -18,8 +19,9 @@ import java.util.List;
 )
 public class LoggingMarketDataConsumer extends AbstractMarketDataConsumer {
 
-    public LoggingMarketDataConsumer(final MarketDataConsumerProperties props) {
-        super(props);
+    public LoggingMarketDataConsumer(final MarketDataConsumerProperties props,
+                                     final ConsumerStatsRegistry consumerStatsRegistry) {
+        super(props, consumerStatsRegistry);
         log.info("Created Logging consumer");
     }
 

@@ -16,7 +16,7 @@ public class HazelcastBufferThrottle<T> {
     private final MarketDataBuffer<T> marketDataBuffer;
     private final HazelcastCacheAdapter<T> hazelcastCacheAdapter;
 
-    @Scheduled(fixedRateString = "${marketdata.throttle.interval-ms:5000}")
+    @Scheduled(fixedRateString = "${marketdata.throttle.interval-ms:30000}")
     public void runThrottled() {
         log.debug("Running throttled cache flush");
         if (marketDataBuffer.isEmpty()) {
