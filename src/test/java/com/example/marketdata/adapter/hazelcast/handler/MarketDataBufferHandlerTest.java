@@ -17,8 +17,10 @@ class MarketDataBufferHandlerTest {
 
         MarketDataBufferHandler<String> handler = new MarketDataBufferHandler<>(buffer);
 
+        // when
         handler.handle("k1", "v1");
 
+        // then
         verify(buffer).put("k1", "v1");
     }
 
@@ -29,8 +31,10 @@ class MarketDataBufferHandlerTest {
 
         MarketDataBufferHandler<String> handler = new MarketDataBufferHandler<>(buffer);
 
+        // when
         handler.handleAll(Map.of("k1", "v1", "k2", "v2"));
 
+        // then
         verify(buffer).put("k1", "v1");
         verify(buffer).put("k2", "v2");
     }
@@ -42,9 +46,11 @@ class MarketDataBufferHandlerTest {
 
         MarketDataBufferHandler<String> handler = new MarketDataBufferHandler<>(buffer);
 
+        // when
         handler.handleAll(null);
         handler.handleAll(Map.of());
 
+        // then
         verifyNoInteractions(buffer);
     }
 }

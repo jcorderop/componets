@@ -8,6 +8,11 @@ class DemoApplicationTests {
 
     @Test
     void contextLoads() {
+        // given
+
+        // when
+
+        // then
     }
 
 }
