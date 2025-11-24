@@ -1,10 +1,10 @@
-package com.example.marketdata.consumer;
+package com.example.marketdata.processor;
 
-import com.example.marketdata.config.MarketDataConsumerProperties;
-import com.example.marketdata.exception.ConsumerRetryableException;
-import com.example.marketdata.model.MarketDataConsumerBatchProcessor;
+import com.example.marketdata.config.MarketDataProcessorProperties;
+import com.example.marketdata.exception.ProcessorRetryableException;
+import com.example.marketdata.model.MarketDataProcessorBatchProcessor;
 import com.example.marketdata.model.MarketDataEvent;
-import com.example.marketdata.monitor.consumer.ConsumerStatsRegistry;
+import com.example.marketdata.monitor.processor.ProcessorStatsRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.SmartLifecycle;
 
@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.concurrent.*;
 
 /**
- * Base class for market data consumers that manages queueing, lifecycle hooks, batch
+ * Base class for market data processors that manages queueing, lifecycle hooks, batch
  * processing, and retry/backoff behavior while delegating actual batch handling to
  * subclasses.
  * <p>
- * Reads {@code marketdata.default.*} properties via {@link com.example.marketdata.config.MarketDataConsumerProperties}
+ * Reads {@code marketdata.default.*} properties via {@link com.example.marketdata.config.MarketDataProcessorProperties}
  * to size queues and tune batching/backoff:
  * <ul>
  *     <li>{@code queue-capacity} – queue depth used for {@link java.util.concurrent.ArrayBlockingQueue}.</li>
@@ -28,24 +28,24 @@ import java.util.concurrent.*;
  * </ul>
  */
 @Slf4j
-public abstract class AbstractMarketDataConsumer
-        implements MarketDataConsumerBatchProcessor, SmartLifecycle {
+public abstract class AbstractMarketDataProcessor
+        implements MarketDataProcessorBatchProcessor, SmartLifecycle {
 
-    private final MarketDataConsumerProperties props;
+    private final MarketDataProcessorProperties props;
     private final BlockingQueue<MarketDataEvent> queue;
-    private final ExecutorService consumerExecutor;
-    private final ConsumerStatsRegistry consumerStatsRegistry;
+    private final ExecutorService processorExecutor;
+    private final ProcessorStatsRegistry processorStatsRegistry;
 
     private volatile boolean running = false;
 
 
-    protected AbstractMarketDataConsumer(final MarketDataConsumerProperties props,
-                                         final ConsumerStatsRegistry consumerStatsRegistry) {
+    protected AbstractMarketDataProcessor(final MarketDataProcessorProperties props,
+                                         final ProcessorStatsRegistry processorStatsRegistry) {
         this.props = props;
         this.queue = new ArrayBlockingQueue<>(props.getQueueCapacity());
-        this.consumerExecutor = Executors.newSingleThreadExecutor(r ->
-                new Thread(r, getConsumerName() + "-consumer-thread"));
-        this.consumerStatsRegistry = consumerStatsRegistry;
+        this.processorExecutor = Executors.newSingleThreadExecutor(r ->
+                new Thread(r, getProcessorName() + "-processor-thread"));
+        this.processorStatsRegistry = processorStatsRegistry;
     }
 
     // ------------------------------------------------------------------------
@@ -58,8 +58,8 @@ public abstract class AbstractMarketDataConsumer
             return;
         }
         running = true;
-        log.info("Starting market data consumer {}", getConsumerName());
-        consumerExecutor.submit(this::runLoop);
+        log.info("Starting market data processor {}", getProcessorName());
+        processorExecutor.submit(this::runLoop);
     }
 
     @Override
@@ -67,9 +67,9 @@ public abstract class AbstractMarketDataConsumer
         if (!running) {
             return;
         }
-        log.info("Stopping market data consumer {}", getConsumerName());
+        log.info("Stopping market data processor {}", getProcessorName());
         running = false;
-        consumerExecutor.shutdownNow();
+        processorExecutor.shutdownNow();
     }
 
     @Override
@@ -94,33 +94,33 @@ public abstract class AbstractMarketDataConsumer
     }
 
     // ------------------------------------------------------------------------
-    // Public API for producers (e.g. ConsumersHandlerService)
+    // Public API for producers (e.g. ProcessorsHandlerService)
     // ------------------------------------------------------------------------
 
     public void enqueue(final MarketDataEvent event) {
-        consumerStatsRegistry.recordEnqueue(getConsumerName());
+        processorStatsRegistry.recordEnqueue(getProcessorName());
         if (event == null) {
-            log.warn("Ignoring null event for consumer {}", getConsumerName());
-            consumerStatsRegistry.recordDrop(getConsumerName());
+            log.warn("Ignoring null event for processor {}", getProcessorName());
+            processorStatsRegistry.recordDrop(getProcessorName());
             return;
         }
 
         if (!running) {
-            log.warn("Consumer {} is not running; dropping event {}", getConsumerName(), event);
-            consumerStatsRegistry.recordDrop(getConsumerName());
+            log.warn("Processor {} is not running; dropping event {}", getProcessorName(), event);
+            processorStatsRegistry.recordDrop(getProcessorName());
             return;
         }
 
         boolean offered = queue.offer(event);
         if (!offered) {
-            log.error("Queue is full for consumer {} (capacity={}); dropping event {}",
-                    getConsumerName(), props.getQueueCapacity(), event);
-            consumerStatsRegistry.recordDrop(getConsumerName());
+            log.error("Queue is full for processor {} (capacity={}); dropping event {}",
+                    getProcessorName(), props.getQueueCapacity(), event);
+            processorStatsRegistry.recordDrop(getProcessorName());
         }
     }
 
     // ------------------------------------------------------------------------
-    // Main consumer loop
+    // Main processor loop
     // ------------------------------------------------------------------------
 
     private void runLoop() {
@@ -131,7 +131,7 @@ public abstract class AbstractMarketDataConsumer
 
         try {
             while (running && !Thread.currentThread().isInterrupted()) {
-                consumerStatsRegistry.recordQueueSize(getConsumerName(), queue.size());
+                processorStatsRegistry.recordQueueSize(getProcessorName(), queue.size());
 
                 MarketDataEvent first = queue.poll(pollTimeoutMillis, TimeUnit.MILLISECONDS);
                 if (first == null) {
@@ -147,9 +147,9 @@ public abstract class AbstractMarketDataConsumer
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.info("Consumer {} interrupted", getConsumerName());
+            log.info("Processor {} interrupted", getProcessorName());
         } finally {
-            log.info("Exiting consumer loop for {}", getConsumerName());
+            log.info("Exiting processor loop for {}", getProcessorName());
         }
     }
 
@@ -170,15 +170,15 @@ public abstract class AbstractMarketDataConsumer
                         TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
 
                 // stats: batch processed successfully
-                consumerStatsRegistry.recordBatchProcessed(
-                        getConsumerName(),
+                processorStatsRegistry.recordBatchProcessed(
+                        getProcessorName(),
                         batch.size(),
                         elapsedMillis
                 );
 
-            } catch (ConsumerRetryableException e) {
-                log.warn("Retryable error in consumer {}: {}. Will retry batch after {} ms.",
-                        getConsumerName(), e.getMessage(), backoff, e);
+            } catch (ProcessorRetryableException e) {
+                log.warn("Retryable error in processor {}: {}. Will retry batch after {} ms.",
+                        getProcessorName(), e.getMessage(), backoff, e);
 
                 // Sleep with current backoff
                 if (backoff > 0) {
@@ -186,7 +186,7 @@ public abstract class AbstractMarketDataConsumer
                         Thread.sleep(backoff);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        log.info("Consumer {} interrupted during retry sleep", getConsumerName());
+                        log.info("Processor {} interrupted during retry sleep", getProcessorName());
                         // allow outer loop to exit
                         break;
                     }
@@ -199,19 +199,19 @@ public abstract class AbstractMarketDataConsumer
 
             } catch (Exception e) {
                 // Non-retryable: log and drop this batch, continue with next
-                log.error("Non-retryable error in consumer {}: {}. Dropping batch.",
-                        getConsumerName(), e.getMessage(), e);
-                consumerStatsRegistry.recordDrops(getConsumerName(), batch.size());
+                log.error("Non-retryable error in processor {}: {}. Dropping batch.",
+                        getProcessorName(), e.getMessage(), e);
+                processorStatsRegistry.recordDrops(getProcessorName(), batch.size());
                 processed = true;
             }
         }
     }
 
     // ------------------------------------------------------------------------
-    // To be implemented by concrete consumers
+    // To be implemented by concrete processors
     // ------------------------------------------------------------------------
 
-    public abstract String getConsumerName();
+    public abstract String getProcessorName();
 
     @Override
     public abstract void processBatch(List<MarketDataEvent> batch);

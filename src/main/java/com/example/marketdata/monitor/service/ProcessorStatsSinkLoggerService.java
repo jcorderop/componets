@@ -1,32 +1,32 @@
 package com.example.marketdata.monitor.service;
 
-import com.example.marketdata.monitor.consumer.ConsumerStatsSink;
-import com.example.marketdata.monitor.consumer.ConsumerStatsSnapshot;
+import com.example.marketdata.monitor.processor.ProcessorStatsSink;
+import com.example.marketdata.monitor.processor.ProcessorStatsSnapshot;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 /**
- * Simple {@link ConsumerStatsSink} that renders each snapshot to the application logs. It is
+ * Simple {@link ProcessorStatsSink} that renders each snapshot to the application logs. It is
  * useful for diagnostics or environments where a lightweight reporting mechanism is sufficient.
  */
 @Slf4j
 @Service
-public class ConsumerStatsSinkLoggerService implements ConsumerStatsSink {
+public class ProcessorStatsSinkLoggerService implements ProcessorStatsSink {
 
     @Override
-    public void publish(List<ConsumerStatsSnapshot> snapshots) {
+    public void publish(List<ProcessorStatsSnapshot> snapshots) {
         if (snapshots == null || snapshots.isEmpty()) {
-            log.debug("No consumer stats to publish for the current interval");
+            log.debug("No processor stats to publish for the current interval");
             return;
         }
 
-        for (ConsumerStatsSnapshot snapshot : snapshots) {
+        for (ProcessorStatsSnapshot snapshot : snapshots) {
             log.info(
-                    "Consumer stats [{}]: window={}..{}, enqueued={}, processed={}, dropped={}, " +
+                    "Processor stats [{}]: window={}..{}, enqueued={}, processed={}, dropped={}, " +
                             "latency_ms[min={}, max={}, avg={}], queueSize={}",
-                    snapshot.consumerName(),
+                    snapshot.processorName(),
                     snapshot.windowStartMillis(),
                     snapshot.windowEndMillis(),
                     snapshot.eventsEnqueued(),

@@ -2,7 +2,7 @@
 package com.example.marketdata.service;
 
 import com.example.demo.MarketDataMessage;
-import com.example.marketdata.consumer.AbstractMarketDataConsumer;
+import com.example.marketdata.processor.AbstractMarketDataProcessor;
 import com.example.marketdata.model.MarketDataEvent;
 import org.junit.jupiter.api.Test;
 
@@ -12,17 +12,17 @@ import java.util.List;
 import static org.mockito.Mockito.*;
 
 /**
- * Verifies that the handler dispatches every inbound event to all registered consumers.
+ * Verifies that the handler dispatches every inbound event to all registered processors.
  */
-class ConsumersHandlerServiceTest {
+class ProcessorsHandlerServiceTest {
 
     @Test
-    void onEventForwardsEventToAllConsumers() {
-        AbstractMarketDataConsumer c1 = mock(AbstractMarketDataConsumer.class);
-        AbstractMarketDataConsumer c2 = mock(AbstractMarketDataConsumer.class);
+    void onEventForwardsEventToAllProcessors() {
+        AbstractMarketDataProcessor c1 = mock(AbstractMarketDataProcessor.class);
+        AbstractMarketDataProcessor c2 = mock(AbstractMarketDataProcessor.class);
 
         // given
-        ConsumersHandlerService service = new ConsumersHandlerService(List.of(c1, c2));
+        ProcessorsHandlerService service = new ProcessorsHandlerService(List.of(c1, c2));
 
         MarketDataEvent event = MarketDataMessage.builder()
                 .source("demo")

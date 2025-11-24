@@ -1,11 +1,11 @@
-package com.example.marketdata.consumer;
+package com.example.marketdata.processor;
 
 import com.example.demo.MarketDataMessage;
-import com.example.marketdata.config.MarketDataConsumerProperties;
-import com.example.marketdata.exception.ConsumerRetryableException;
+import com.example.marketdata.config.MarketDataProcessorProperties;
+import com.example.marketdata.exception.ProcessorRetryableException;
 import com.example.marketdata.model.MarketDataEvent;
-import com.example.marketdata.monitor.consumer.ConsumerStatsRegistry;
-import com.example.marketdata.monitor.consumer.ConsumerStatsSnapshot;
+import com.example.marketdata.monitor.processor.ProcessorStatsRegistry;
+import com.example.marketdata.monitor.processor.ProcessorStatsSnapshot;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +20,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class AbstractMarketDataConsumerTest {
+class AbstractMarketDataProcessorTest {
 
-    private final TestConsumerStatsRegistry statsRegistry = new TestConsumerStatsRegistry();
+    private final TestProcessorStatsRegistry statsRegistry = new TestProcessorStatsRegistry();
 
     @AfterEach
     void tearDown() {
@@ -32,12 +32,12 @@ class AbstractMarketDataConsumerTest {
     @Test
     void enqueueDropsNullAndEventsWhenNotRunning() {
         // given
-        MarketDataConsumerProperties props = baseProps();
-        TestConsumer consumer = new TestConsumer(props, statsRegistry, 0);
+        MarketDataProcessorProperties props = baseProps();
+        TestProcessor processor = new TestProcessor(props, statsRegistry, 0);
 
         // when
-        consumer.enqueue(null);
-        consumer.enqueue(sampleEvent());
+        processor.enqueue(null);
+        processor.enqueue(sampleEvent());
 
         // then
         assertThat(statsRegistry.enqueues).isEqualTo(2);
@@ -47,17 +47,17 @@ class AbstractMarketDataConsumerTest {
     @Test
     void enqueueDropsWhenQueueIsFull() throws Exception {
         // given
-        MarketDataConsumerProperties props = baseProps();
+        MarketDataProcessorProperties props = baseProps();
         props.setQueueCapacity(1);
-        TestConsumer consumer = new TestConsumer(props, statsRegistry, 0);
+        TestProcessor processor = new TestProcessor(props, statsRegistry, 0);
 
-        BlockingQueue<MarketDataEvent> queue = queueFor(consumer);
+        BlockingQueue<MarketDataEvent> queue = queueFor(processor);
         queue.add(sampleEvent());
 
-        setRunning(consumer, true);
+        setRunning(processor, true);
 
         // when
-        consumer.enqueue(sampleEvent());
+        processor.enqueue(sampleEvent());
 
         // then
         assertThat(statsRegistry.enqueues).isEqualTo(1);
@@ -67,30 +67,30 @@ class AbstractMarketDataConsumerTest {
     @Test
     void retriesAreTrackedUntilBatchSucceeds() throws InterruptedException {
         // given
-        MarketDataConsumerProperties props = baseProps();
+        MarketDataProcessorProperties props = baseProps();
         props.setInitialRetryBackoffMillis(1);
         props.setMaxRetryBackoffMillis(2);
         props.setRetryBackoffMultiplier(1.5);
 
         CountDownLatch processed = new CountDownLatch(1);
-        TestConsumer consumer = new TestConsumer(props, statsRegistry, 2, processed);
+        TestProcessor processor = new TestProcessor(props, statsRegistry, 2, processed);
 
         // when
-        consumer.start();
+        processor.start();
         try {
-            consumer.enqueue(sampleEvent());
+            processor.enqueue(sampleEvent());
 
             // then
             assertThat(processed.await(2, TimeUnit.SECONDS)).isTrue();
             assertThat(statsRegistry.batchProcessed).isEqualTo(1);
             assertThat(statsRegistry.drops).isZero();
         } finally {
-            consumer.stop();
+            processor.stop();
         }
     }
 
-    private MarketDataConsumerProperties baseProps() {
-        MarketDataConsumerProperties props = new MarketDataConsumerProperties();
+    private MarketDataProcessorProperties baseProps() {
+        MarketDataProcessorProperties props = new MarketDataProcessorProperties();
         props.setQueueCapacity(10);
         props.setBatchSize(1);
         props.setPollTimeoutMillis(1);
@@ -108,82 +108,82 @@ class AbstractMarketDataConsumerTest {
     }
 
     @SuppressWarnings("unchecked")
-    private BlockingQueue<MarketDataEvent> queueFor(AbstractMarketDataConsumer consumer) throws Exception {
-        Field queueField = AbstractMarketDataConsumer.class.getDeclaredField("queue");
+    private BlockingQueue<MarketDataEvent> queueFor(AbstractMarketDataProcessor processor) throws Exception {
+        Field queueField = AbstractMarketDataProcessor.class.getDeclaredField("queue");
         queueField.setAccessible(true);
-        return (BlockingQueue<MarketDataEvent>) queueField.get(consumer);
+        return (BlockingQueue<MarketDataEvent>) queueField.get(processor);
     }
 
-    private void setRunning(AbstractMarketDataConsumer consumer, boolean running) throws Exception {
-        Field runningField = AbstractMarketDataConsumer.class.getDeclaredField("running");
+    private void setRunning(AbstractMarketDataProcessor processor, boolean running) throws Exception {
+        Field runningField = AbstractMarketDataProcessor.class.getDeclaredField("running");
         runningField.setAccessible(true);
-        runningField.set(consumer, running);
+        runningField.set(processor, running);
     }
 
-    private static class TestConsumer extends AbstractMarketDataConsumer {
+    private static class TestProcessor extends AbstractMarketDataProcessor {
 
         private final AtomicInteger attempt = new AtomicInteger();
         private final int failCount;
         private final CountDownLatch latch;
 
-        TestConsumer(MarketDataConsumerProperties props,
-                     ConsumerStatsRegistry consumerStatsRegistry,
+        TestProcessor(MarketDataProcessorProperties props,
+                     ProcessorStatsRegistry processorStatsRegistry,
                      int failCount) {
-            this(props, consumerStatsRegistry, failCount, new CountDownLatch(0));
+            this(props, processorStatsRegistry, failCount, new CountDownLatch(0));
         }
 
-        TestConsumer(MarketDataConsumerProperties props,
-                     ConsumerStatsRegistry consumerStatsRegistry,
+        TestProcessor(MarketDataProcessorProperties props,
+                     ProcessorStatsRegistry processorStatsRegistry,
                      int failCount,
                      CountDownLatch latch) {
-            super(props, consumerStatsRegistry);
+            super(props, processorStatsRegistry);
             this.failCount = failCount;
             this.latch = latch;
         }
 
         @Override
-        public String getConsumerName() {
-            return "testConsumer";
+        public String getProcessorName() {
+            return "testProcessor";
         }
 
         @Override
         public void processBatch(List<MarketDataEvent> batch) {
             int currentAttempt = attempt.incrementAndGet();
             if (currentAttempt <= failCount) {
-                throw new ConsumerRetryableException("retry " + currentAttempt);
+                throw new ProcessorRetryableException("retry " + currentAttempt);
             }
             latch.countDown();
         }
     }
 
-    private static class TestConsumerStatsRegistry implements ConsumerStatsRegistry {
+    private static class TestProcessorStatsRegistry implements ProcessorStatsRegistry {
 
         private int enqueues;
         private int drops;
         private int batchProcessed;
 
         @Override
-        public void recordEnqueue(String consumer) {
+        public void recordEnqueue(String processor) {
             enqueues++;
         }
 
         @Override
-        public void recordDrops(String consumer, int dropCount) {
+        public void recordDrops(String processor, int dropCount) {
             drops += dropCount;
         }
 
         @Override
-        public void recordBatchProcessed(String consumer, int batchSize, long durationMillis) {
+        public void recordBatchProcessed(String processor, int batchSize, long durationMillis) {
             batchProcessed++;
         }
 
         @Override
-        public void recordQueueSize(String consumer, int queueSize) {
+        public void recordQueueSize(String processor, int queueSize) {
             // not required for these tests
         }
 
         @Override
-        public List<ConsumerStatsSnapshot> snapshotAndReset() {
+        public List<ProcessorStatsSnapshot> snapshotAndReset() {
             return Collections.emptyList();
         }
 
@@ -197,14 +197,14 @@ class AbstractMarketDataConsumerTest {
     @Test
     void nonRetryableErrorDropsBatch() throws InterruptedException {
         // given
-        MarketDataConsumerProperties props = baseProps();
+        MarketDataProcessorProperties props = baseProps();
         CountDownLatch latch = new CountDownLatch(1);
 
-        // Consumer that always throws a RuntimeException
-        AbstractMarketDataConsumer consumer = new AbstractMarketDataConsumer(props, statsRegistry) {
+        // Processor that always throws a RuntimeException
+        AbstractMarketDataProcessor processor = new AbstractMarketDataProcessor(props, statsRegistry) {
             @Override
-            public String getConsumerName() {
-                return "nonRetryableConsumer";
+            public String getProcessorName() {
+                return "nonRetryableProcessor";
             }
 
             @Override
@@ -214,17 +214,17 @@ class AbstractMarketDataConsumerTest {
         };
 
         // when
-        consumer.start();
+        processor.start();
         try {
-            consumer.enqueue(sampleEvent());
-            // Give the consumer loop some time
+            processor.enqueue(sampleEvent());
+            // Give the processor loop some time
             TimeUnit.MILLISECONDS.sleep(100);
 
             // then
             assertThat(statsRegistry.drops).isEqualTo(1);
             assertThat(statsRegistry.batchProcessed).isZero();
         } finally {
-            consumer.stop();
+            processor.stop();
         }
     }
 }

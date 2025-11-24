@@ -1,6 +1,6 @@
 package com.example.marketdata.monitor.service;
 
-import com.example.marketdata.monitor.consumer.ConsumerStatsSnapshot;
+import com.example.marketdata.monitor.processor.ProcessorStatsSnapshot;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -8,15 +8,15 @@ import java.util.List;
 /**
  * Validates that the logging sink safely handles snapshots without throwing exceptions.
  */
-class ConsumerStatsSinkLoggerServiceTest {
+class ProcessorStatsSinkLoggerServiceTest {
 
     @Test
     void publishDoesNotThrowAndLogsSnapshots() {
         // given
-        ConsumerStatsSinkLoggerService sink = new ConsumerStatsSinkLoggerService();
+        ProcessorStatsSinkLoggerService sink = new ProcessorStatsSinkLoggerService();
 
-        ConsumerStatsSnapshot snapshot = ConsumerStatsSnapshot.builder()
-                .consumerName("logger-consumer")
+        ProcessorStatsSnapshot snapshot = ProcessorStatsSnapshot.builder()
+                .processorName("logger-processor")
                 .windowStartMillis(1L)
                 .windowEndMillis(2L)
                 .eventsEnqueued(1L)
