@@ -17,10 +17,10 @@ import java.time.Instant;
  */
 @SpringBootApplication
 @EnableScheduling
-public class DemoApplication {
+public class ProcessorsApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(DemoApplication.class, args);
+        SpringApplication.run(ProcessorsApplication.class, args);
     }
 
     @Bean
