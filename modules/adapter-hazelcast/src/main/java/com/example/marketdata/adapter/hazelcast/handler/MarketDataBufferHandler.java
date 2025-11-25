@@ -43,7 +43,7 @@ public class MarketDataBufferHandler<T> {
      */
     public void handleAll(final Map<String, T> entries) {
         if (entries == null || entries.isEmpty()) {
-            log.error("Ignoring market data: no entries to buffer");
+            log.warn("Ignoring market data: no entries to buffer");
             return;
         }
         entries.forEach(this::handle);

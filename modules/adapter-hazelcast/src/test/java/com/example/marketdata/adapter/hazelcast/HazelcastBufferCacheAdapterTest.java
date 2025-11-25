@@ -5,9 +5,12 @@ import com.example.marketdata.exception.ProcessorRetryableException;
 import com.example.marketdata.exception.ProcessorRuntimeException;
 import com.example.marketdata.model.MarketDataEvent;
 import com.hazelcast.config.Config;
+import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.LifecycleService;
 import com.hazelcast.map.IMap;
+import com.hazelcast.spi.exception.RetryableHazelcastException;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 
@@ -52,6 +55,28 @@ class HazelcastBufferCacheAdapterTest {
 
     private TestMessage msg() {
         return new TestMessage("TEST", Instant.parse("2024-01-01T00:00:00Z"));
+    }
+
+    private AdapterContext<TestMessage> adapterWithFailingMap(RuntimeException failure) {
+        HazelcastInstance hazelcast = mock(HazelcastInstance.class);
+        LifecycleService lifecycleService = mock(LifecycleService.class);
+        when(hazelcast.getLifecycleService()).thenReturn(lifecycleService);
+        when(lifecycleService.addLifecycleListener(any())).thenReturn("listener-id");
+
+        @SuppressWarnings("unchecked")
+        IMap<String, String> map = mock(IMap.class);
+        when(hazelcast.getMap("market-cache")).thenReturn(map);
+        doThrow(failure).when(map).putAll(anyMap());
+
+        @SuppressWarnings("unchecked")
+        MarketDataBufferHandler<TestMessage> handler = mock(MarketDataBufferHandler.class);
+
+        @SuppressWarnings("unchecked")
+        HazelcastBufferThrottle<TestMessage> throttle = mock(HazelcastBufferThrottle.class);
+
+        HazelcastBufferCacheAdapter<TestMessage> adapter =
+                new HazelcastBufferCacheAdapter<>(hazelcast, "market-cache", handler, throttle);
+        return new AdapterContext<>(adapter, map);
     }
 
     // ----------------------------------------------------------------------
@@ -184,6 +209,24 @@ class HazelcastBufferCacheAdapterTest {
         assertThrows(NullPointerException.class, () -> a.bufferMarketData(List.of(new TestEvent("cache-1"))));
     }
 
+    @Test
+    void retryableHazelcastExceptionSurfacesAsProcessorRetryable() {
+        AdapterContext<TestMessage> ctx = adapterWithFailingMap(new RetryableHazelcastException("retry"));
+
+        assertThrows(ProcessorRetryableException.class, () ->
+                ctx.adapter().send(Map.of("cache-1", msg())));
+        verify(ctx.map()).putAll(anyMap());
+    }
+
+    @Test
+    void nonRetryableHazelcastExceptionSurfacesAsProcessorRuntime() {
+        AdapterContext<TestMessage> ctx = adapterWithFailingMap(new HazelcastException("fatal"));
+
+        assertThrows(ProcessorRuntimeException.class, () ->
+                ctx.adapter().send(Map.of("cache-1", msg())));
+        verify(ctx.map()).putAll(anyMap());
+    }
+
     private record TestMessage(String symbol, Instant timestamp) { }
 
     private record TestEvent(String cacheId) implements MarketDataEvent {
@@ -192,4 +235,6 @@ class HazelcastBufferCacheAdapterTest {
             return cacheId;
         }
     }
+
+    private record AdapterContext<T>(HazelcastBufferCacheAdapter<T> adapter, IMap<String, String> map) { }
 }
