@@ -6,6 +6,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.annotation.DirtiesContext;
@@ -22,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * and wires the handler with the complete list.
  */
 @SpringBootTest()
+@EnableAutoConfiguration
 @ActiveProfiles("all-processors")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class AllProcessorsProfileTest {
@@ -43,10 +45,10 @@ class AllProcessorsProfileTest {
 
         assertTrue(processors.stream().anyMatch(HazelcastMarketDataBufferProcessor.class::isInstance));
         assertTrue(processors.stream().anyMatch(KafkaMarketDataProcessor.class::isInstance));
+        assertTrue(processors.stream().anyMatch(LoggingMarketDataProcessor.class::isInstance));
+        assertTrue(processors.stream().anyMatch(OracleMarketDataProcessor.class::isInstance));
         assertTrue(processors.stream().anyMatch(PostgresMarketDataProcessor.class::isInstance));
         assertTrue(processors.stream().anyMatch(ZMQMarketDataProcessor.class::isInstance));
-        assertTrue(processors.stream().anyMatch(OracleMarketDataProcessor.class::isInstance));
-        assertTrue(processors.stream().anyMatch(LoggingMarketDataProcessor.class::isInstance));
     }
 
     @AfterAll
