@@ -5,6 +5,7 @@ import com.example.marketdata.exception.ProcessorRetryableException;
 import com.example.marketdata.model.MarketDataProcessorBatchProcessor;
 import com.example.marketdata.model.MarketDataEvent;
 import com.example.marketdata.monitor.processor.ProcessorStatsRegistry;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.SmartLifecycle;
 
@@ -91,6 +92,16 @@ public abstract class AbstractMarketDataProcessor
     @Override
     public int getPhase() {
         return 0;
+    }
+
+    @PreDestroy
+    public void destroy() {
+        stop();
+        try {
+            processorExecutor.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     // ------------------------------------------------------------------------
