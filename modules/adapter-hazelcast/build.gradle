@@ -2,10 +2,17 @@ plugins {
     id 'java-library'
 }
 
+test {
+    useJUnitPlatform()
+}
+
 dependencies {
     implementation project(':marketdata-core')
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'com.hazelcast:hazelcast-spring:5.4.0'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

@@ -8,7 +8,6 @@ import com.example.marketdata.cache.MarketDataBuffer;
 import com.example.marketdata.config.MarketDataProcessorProperties;
 import com.example.marketdata.model.MarketDataEvent;
 import com.example.marketdata.monitor.processor.ProcessorStatsRegistryImpl;
-import com.example.marketdata.processor.HazelcastMarketDataBufferProcessor;
 import com.example.marketdata.service.ProcessorsHandlerService;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
