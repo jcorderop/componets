@@ -37,7 +37,8 @@ import static org.junit.jupiter.api.Assertions.fail;
                 "marketdata.processors.hazelcast.enabled=true",
                 "marketdata.default.batch-size=1",
                 "marketdata.default.queue-capacity=10",
-                "marketdata.default.poll-timeout-millis=25"
+                "marketdata.default.poll-timeout-millis=25",
+                "marketdata.hazelcast.cache-name=integration-cache"
         }
 )
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
