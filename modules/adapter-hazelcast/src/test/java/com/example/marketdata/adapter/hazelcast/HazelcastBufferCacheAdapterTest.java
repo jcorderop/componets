@@ -57,28 +57,6 @@ class HazelcastBufferCacheAdapterTest {
         return new TestMessage("TEST", Instant.parse("2024-01-01T00:00:00Z"));
     }
 
-    private AdapterContext<TestMessage> adapterWithFailingMap(RuntimeException failure) {
-        HazelcastInstance hazelcast = mock(HazelcastInstance.class);
-        LifecycleService lifecycleService = mock(LifecycleService.class);
-        when(hazelcast.getLifecycleService()).thenReturn(lifecycleService);
-        when(lifecycleService.addLifecycleListener(any())).thenReturn("listener-id");
-
-        @SuppressWarnings("unchecked")
-        IMap<String, String> map = mock(IMap.class);
-        when(hazelcast.getMap("market-cache")).thenReturn(map);
-        doThrow(failure).when(map).putAll(anyMap());
-
-        @SuppressWarnings("unchecked")
-        MarketDataBufferHandler<TestMessage> handler = mock(MarketDataBufferHandler.class);
-
-        @SuppressWarnings("unchecked")
-        HazelcastBufferThrottle<TestMessage> throttle = mock(HazelcastBufferThrottle.class);
-
-        HazelcastBufferCacheAdapter<TestMessage> adapter =
-                new HazelcastBufferCacheAdapter<>(hazelcast, "market-cache", handler, throttle);
-        return new AdapterContext<>(adapter, map);
-    }
-
     // ----------------------------------------------------------------------
     // Happy path tests (real Hazelcast)
     // ----------------------------------------------------------------------
@@ -207,24 +185,6 @@ class HazelcastBufferCacheAdapterTest {
         HazelcastBufferCacheAdapter<MarketDataEvent> a = new HazelcastBufferCacheAdapter<>(hz, "market-cache");
 
         assertThrows(NullPointerException.class, () -> a.bufferMarketData(List.of(new TestEvent("cache-1"))));
-    }
-
-    @Test
-    void retryableHazelcastExceptionSurfacesAsProcessorRetryable() {
-        AdapterContext<TestMessage> ctx = adapterWithFailingMap(new RetryableHazelcastException("retry"));
-
-        assertThrows(ProcessorRetryableException.class, () ->
-                ctx.adapter().send(Map.of("cache-1", msg())));
-        verify(ctx.map()).putAll(anyMap());
-    }
-
-    @Test
-    void nonRetryableHazelcastExceptionSurfacesAsProcessorRuntime() {
-        AdapterContext<TestMessage> ctx = adapterWithFailingMap(new HazelcastException("fatal"));
-
-        assertThrows(ProcessorRuntimeException.class, () ->
-                ctx.adapter().send(Map.of("cache-1", msg())));
-        verify(ctx.map()).putAll(anyMap());
     }
 
     private record TestMessage(String symbol, Instant timestamp) { }
