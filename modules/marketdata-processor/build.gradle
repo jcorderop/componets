@@ -15,8 +15,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
-    //implementation 'com.hazelcast:hazelcast-spring'
 
+    testImplementation 'com.hazelcast:hazelcast-spring'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mockito:mockito-core'
     testImplementation 'org.junit.jupiter:junit-jupiter'

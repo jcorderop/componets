@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Configuration;
  * to store market data snapshots.
  */
 @Configuration
-@ConditionalOnProperty(prefix = "marketdata.adapters.hazelcast", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class HazelcastConfiguration {
 
     private HazelcastInstance hazelcastInstance;

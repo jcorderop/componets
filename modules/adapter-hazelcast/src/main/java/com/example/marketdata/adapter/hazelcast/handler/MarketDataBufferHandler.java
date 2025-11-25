@@ -13,7 +13,6 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(prefix = "marketdata.adapters.hazelcast", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class MarketDataBufferHandler<T> {
 
     private final MarketDataBuffer<T> marketDataBuffer;

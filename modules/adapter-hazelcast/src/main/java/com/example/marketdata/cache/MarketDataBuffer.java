@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * are flushed to an external cache or adapter.
  */
 @Component
-@ConditionalOnProperty(prefix = "marketdata.adapters.hazelcast", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class MarketDataBuffer <T> {
 
     // Atomic drain of the entire buffer without losing messages, and without locking

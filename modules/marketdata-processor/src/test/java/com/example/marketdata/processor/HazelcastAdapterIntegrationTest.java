@@ -31,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 @SpringBootTest(
         classes = HazelcastAdapterIntegrationTest.TestConfig.class,
         properties = {
-                "marketdata.adapters.hazelcast.enabled=true",
                 "marketdata.processors.hazelcast.enabled=true",
                 "marketdata.default.batch-size=1",
                 "marketdata.default.queue-capacity=10",
