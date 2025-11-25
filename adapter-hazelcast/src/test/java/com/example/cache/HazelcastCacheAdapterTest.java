@@ -1,7 +1,7 @@
 package com.example.cache;
 
-import com.example.demo.MarketDataMessage;
 import com.example.marketdata.adapter.hazelcast.HazelcastCacheAdapter;
+import com.example.marketdata.model.MarketDataEvent;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.Config;
@@ -22,6 +22,31 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration tests that exercise the Hazelcast cache adapter against a real cluster.
  */
 class HazelcastCacheAdapterIT {
+
+    private static final class TestMarketDataMessage implements MarketDataEvent {
+        private final String source;
+        private final String symbol;
+        private final double price;
+        private final long size;
+        private final Instant timestamp;
+
+        TestMarketDataMessage(String source, String symbol, double price, long size, Instant timestamp) {
+            this.source = source;
+            this.symbol = symbol;
+            this.price = price;
+            this.size = size;
+            this.timestamp = timestamp;
+        }
+
+        public String getSource() { return source; }
+        public String getSymbol() { return symbol; }
+        public double getPrice() { return price; }
+        public long getSize() { return size; }
+        public Instant getTimestamp() { return timestamp; }
+
+        @Override
+        public String getCacheId() { return symbol; }
+    }
 
     private HazelcastInstance hazelcastInstance;
     private String clusterName;
@@ -45,7 +70,7 @@ class HazelcastCacheAdapterIT {
         // given
         HazelcastCacheAdapter cacheAdapter = new HazelcastCacheAdapter(hazelcastInstance, "market-cache");
 
-        MarketDataMessage message = new MarketDataMessage(
+        TestMarketDataMessage message = new TestMarketDataMessage(
                 "demo",
                 "TEST",
                 10.5,
@@ -70,14 +95,14 @@ class HazelcastCacheAdapterIT {
     void updateRequiresCacheId() {
         // given
         HazelcastCacheAdapter cacheAdapter = new HazelcastCacheAdapter(hazelcastInstance, "market-cache");
-        MarketDataMessage validMessage = new MarketDataMessage(
+        TestMarketDataMessage validMessage = new TestMarketDataMessage(
                 "demo",
                 "VALID",
                 12.5,
                 10,
                 Instant.parse("2024-02-02T00:00:00Z")
         );
-        MarketDataMessage invalidMessage = new MarketDataMessage(
+        TestMarketDataMessage invalidMessage = new TestMarketDataMessage(
                 "demo",
                 "INVALID",
                 1.5,
@@ -110,14 +135,14 @@ class HazelcastCacheAdapterIT {
         // given
         HazelcastCacheAdapter cacheAdapter = new HazelcastCacheAdapter(hazelcastInstance, "market-cache");
 
-        MarketDataMessage first = new MarketDataMessage(
+        TestMarketDataMessage first = new TestMarketDataMessage(
                 "demo",
                 "FIRST",
                 101.5,
                 50,
                 Instant.parse("2024-03-03T00:00:00Z")
         );
-        MarketDataMessage second = new MarketDataMessage(
+        TestMarketDataMessage second = new TestMarketDataMessage(
                 "demo",
                 "SECOND",
                 202.5,
@@ -143,7 +168,7 @@ class HazelcastCacheAdapterIT {
         HazelcastInstance client = HazelcastClient.newHazelcastClient(clientConfig);
         HazelcastCacheAdapter cacheAdapter = new HazelcastCacheAdapter(client, "market-cache");
 
-        MarketDataMessage message = new MarketDataMessage(
+        TestMarketDataMessage message = new TestMarketDataMessage(
                 "demo",
                 "RECONNECT",
                 33.3,

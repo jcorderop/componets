@@ -1,6 +1,5 @@
 package com.example.marketdata.adapter.hazelcast;
 
-import com.example.marketdata.adapter.BaseAdapter;
 import com.example.marketdata.exception.ProcessorRetryableException;
 import com.example.marketdata.exception.ProcessorRuntimeException;
 import com.example.marketdata.util.JsonUtil;
@@ -12,7 +11,6 @@ import com.hazelcast.core.LifecycleEvent.LifecycleState;
 import com.hazelcast.map.IMap;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -31,8 +29,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(prefix = "marketdata.adapters.hazelcast", name = "enabled", havingValue = "true", matchIfMissing = false)
-public class HazelcastCacheAdapter<T> implements BaseAdapter<T> {
+public class HazelcastCacheAdapter<T> implements IHazelcastCacheAdapter<T> {
 
     private final HazelcastInstance hazelcastInstance;
     private final String cacheName;

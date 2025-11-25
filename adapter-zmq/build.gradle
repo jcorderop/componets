@@ -9,6 +9,7 @@ jar { enabled = true }
 
 dependencies {
     implementation project(':adapter-core')
+    implementation project(':marketdata-processor')
     implementation 'org.springframework.boot:spring-boot-starter'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

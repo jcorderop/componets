@@ -1,8 +1,6 @@
 package com.example.marketdata.adapter.zmq;
 
-import com.example.marketdata.adapter.BaseAdapter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -13,8 +11,7 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(prefix = "marketdata.adapters.zmq", name = "enabled", havingValue = "true")
-public class ZmqAdapter<T> implements BaseAdapter<T> {
+public class ZmqAdapter<T> implements IZmqAdapter<T> {
     @Override
     public void send(Map<String, T> entries) {
         log.info("Sending {} entries to ZeroMQ placeholder adapter", entries.size());
