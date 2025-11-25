@@ -1,6 +1,6 @@
 package com.example.marketdata.processor;
 
-import com.example.marketdata.adapter.hazelcast.IHazelcastCacheAdapter;
+import com.example.marketdata.adapter.hazelcast.IHazelcastBufferCacheAdapter;
 import com.example.marketdata.config.MarketDataProcessorProperties;
 import com.example.marketdata.model.MarketDataEvent;
 import com.example.marketdata.monitor.processor.ProcessorStatsRegistry;
@@ -20,7 +20,7 @@ class HazelcastMarketDataProcessorTest {
         ProcessorStatsRegistry statsRegistry = mock(ProcessorStatsRegistry.class);
 
         @SuppressWarnings("unchecked")
-        IHazelcastCacheAdapter<MarketDataEvent> cacheAdapter = mock(IHazelcastCacheAdapter.class);
+        IHazelcastBufferCacheAdapter<MarketDataEvent> cacheAdapter = mock(IHazelcastBufferCacheAdapter.class);
 
         HazelcastMarketDataProcessor<MarketDataEvent> processor =
                 new HazelcastMarketDataProcessor<>(props, statsRegistry, cacheAdapter);
@@ -38,7 +38,7 @@ class HazelcastMarketDataProcessorTest {
         ProcessorStatsRegistry statsRegistry = mock(ProcessorStatsRegistry.class);
 
         @SuppressWarnings("unchecked")
-        IHazelcastCacheAdapter<MarketDataEvent> cacheAdapter = mock(IHazelcastCacheAdapter.class);
+        IHazelcastBufferCacheAdapter<MarketDataEvent> cacheAdapter = mock(IHazelcastBufferCacheAdapter.class);
 
         HazelcastMarketDataProcessor<MarketDataEvent> processor =
                 new HazelcastMarketDataProcessor<>(props, statsRegistry, cacheAdapter);
