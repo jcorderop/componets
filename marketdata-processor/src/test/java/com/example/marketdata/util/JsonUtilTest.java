@@ -1,7 +1,7 @@
 
 package com.example.marketdata.util;
 
-import com.example.demo.MarketDataMessage;
+import com.example.marketdata.model.MarketDataEvent;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -13,10 +13,21 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class JsonUtilTest {
 
+    private record TestMarketDataMessage(String source,
+                                         String symbol,
+                                         double price,
+                                         long size,
+                                         Instant timestamp) implements MarketDataEvent {
+        @Override
+        public String getCacheId() {
+            return symbol;
+        }
+    }
+
     @Test
     void toJsonSerializesPojo() {
         // given
-        MarketDataMessage msg = new MarketDataMessage(
+        TestMarketDataMessage msg = new TestMarketDataMessage(
                 "demo",
                 "BOND1",
                 100.5,

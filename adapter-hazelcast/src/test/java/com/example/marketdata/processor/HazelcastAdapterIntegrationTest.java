@@ -1,10 +1,12 @@
 package com.example.marketdata.processor;
 
-import com.example.demo.MarketDataMessage;
-import com.example.marketdata.adapter.BaseAdapter;
+import com.example.marketdata.adapter.hazelcast.HazelcastBufferThrottle;
 import com.example.marketdata.adapter.hazelcast.HazelcastCacheAdapter;
 import com.example.marketdata.adapter.hazelcast.config.HazelcastConfiguration;
+import com.example.marketdata.adapter.hazelcast.handler.MarketDataBufferHandler;
+import com.example.marketdata.cache.MarketDataBuffer;
 import com.example.marketdata.config.MarketDataProcessorProperties;
+import com.example.marketdata.model.MarketDataEvent;
 import com.example.marketdata.monitor.processor.ProcessorStatsRegistryImpl;
 import com.example.marketdata.service.ProcessorsHandlerService;
 import com.hazelcast.core.HazelcastInstance;
@@ -23,15 +25,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * Integration test that wires the Hazelcast adapter into the adapter-backed processor and
- * verifies that batches are delivered to a Hazelcast map.
+ * Integration test that wires the Hazelcast processor and verifies that batches are delivered
+ * to a Hazelcast map.
  */
 @SpringBootTest(
         classes = HazelcastAdapterIntegrationTest.TestConfig.class,
         properties = {
                 "marketdata.adapters.hazelcast.enabled=true",
-                "marketdata.hazelcast.cache-name=integration-cache",
-                "marketdata.processors.adapter.enabled=true",
+                "marketdata.processors.hazelcast.enabled=true",
                 "marketdata.default.batch-size=1",
                 "marketdata.default.queue-capacity=10",
                 "marketdata.default.poll-timeout-millis=25"
@@ -39,6 +40,17 @@ import static org.junit.jupiter.api.Assertions.fail;
 )
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class HazelcastAdapterIntegrationTest {
+
+    private record TestMarketDataMessage(String source,
+                                         String symbol,
+                                         double price,
+                                         long size,
+                                         Instant timestamp) implements MarketDataEvent {
+        @Override
+        public String getCacheId() {
+            return symbol;
+        }
+    }
 
     private static final String CACHE_NAME = "integration-cache";
 
@@ -49,11 +61,11 @@ class HazelcastAdapterIntegrationTest {
     private HazelcastInstance hazelcastInstance;
 
     @Autowired
-    private BaseAdapter<MarketDataMessage> baseAdapter;
+    private HazelcastBufferThrottle<TestMarketDataMessage> hazelcastBufferThrottle;
 
     @Test
-    void adapterBackedProcessorWritesToHazelcast() throws Exception {
-        MarketDataMessage event = new MarketDataMessage(
+    void hazelcastProcessorWritesToHazelcast() throws Exception {
+        TestMarketDataMessage event = new TestMarketDataMessage(
                 "feed-A",
                 "EURUSD",
                 1.1234,
@@ -62,6 +74,8 @@ class HazelcastAdapterIntegrationTest {
         );
 
         processorsHandlerService.onEvent(event);
+        Thread.sleep(100);
+        hazelcastBufferThrottle.runThrottled();
 
         IMap<String, String> cache = hazelcastInstance.getMap(CACHE_NAME);
         awaitCachePopulation(cache, event.getCacheId());
@@ -69,8 +83,6 @@ class HazelcastAdapterIntegrationTest {
         String storedJson = cache.get(event.getCacheId());
         assertTrue(storedJson.contains("\"symbol\":\"EURUSD\""),
                 "Hazelcast map should contain serialized market data entry");
-        assertTrue(baseAdapter instanceof HazelcastCacheAdapter,
-                "BaseAdapter bean should be provided by Hazelcast module");
     }
 
     private void awaitCachePopulation(IMap<String, String> cache, String key) throws InterruptedException {
@@ -86,12 +98,15 @@ class HazelcastAdapterIntegrationTest {
 
     @TestConfiguration
     @Import({
-            AdapterBackedMarketDataProcessor.class,
+            HazelcastMarketDataProcessor.class,
             ProcessorsHandlerService.class,
             MarketDataProcessorProperties.class,
             ProcessorStatsRegistryImpl.class,
             HazelcastConfiguration.class,
-            HazelcastCacheAdapter.class
+            HazelcastCacheAdapter.class,
+            MarketDataBuffer.class,
+            MarketDataBufferHandler.class,
+            HazelcastBufferThrottle.class
     })
     static class TestConfig {
     }
