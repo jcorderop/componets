@@ -8,7 +8,7 @@ bootJar { enabled = false }
 jar { enabled = true }
 
 dependencies {
-    implementation project(':adapter-core')
+    implementation project(':marketdata-core')
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'com.hazelcast:hazelcast-spring:5.4.0'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

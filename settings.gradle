@@ -1,8 +1,8 @@
 rootProject.name = 'components'
 
-include 'adapter-core', 'adapter-hazelcast', 'adapter-kafka', 'adapter-zmq', 'marketdata-processor', 'marketdata-service'
+include 'marketdata-core', 'adapter-hazelcast', 'adapter-kafka', 'adapter-zmq', 'marketdata-processor', 'marketdata-service'
 
-project(':adapter-core').projectDir = file('modules/adapter-core')
+project(':marketdata-core').projectDir = file('modules/marketdata-core')
 project(':adapter-hazelcast').projectDir = file('modules/adapter-hazelcast')
 project(':adapter-kafka').projectDir = file('modules/adapter-kafka')
 project(':adapter-zmq').projectDir = file('modules/adapter-zmq')
