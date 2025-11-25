@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Confirms that enabling the "all-processors" profile activates every conditional processor
  * and wires the handler with the complete list.
  */
-@SpringBootTest(classes = AllProcessorsProfileTest.TestConfig.class)
+@SpringBootTest()
 @ActiveProfiles("all-processors")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class AllProcessorsProfileTest {
