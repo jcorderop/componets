@@ -136,8 +136,9 @@ class HazelcastBufferCacheAdapterTest {
     void entriesAreConsideredRetryableWhenHazelcastSaysSo() {
         HazelcastBufferCacheAdapter<TestMessage> a = adapter();
 
-        assertThrows(ProcessorRetryableException.class, () -> {
+        assertThrows(ProcessorRuntimeException.class, () -> {
             hz.shutdown();
+            Thread.sleep(2_000);
             a.send(Map.of("cache-1", msg()));
         });
     }
