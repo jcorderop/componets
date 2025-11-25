@@ -10,9 +10,9 @@ import java.util.Map;
 public interface BaseAdapter <T> {
 
     /**
-     * Serialize the provided payloads to JSON and update the configured Hazelcast cache.
+     * Deliver the provided payloads to the adapter's destination.
      *
-     * @param entries map of cache IDs to JSON-serializable DTOs to store
+     * @param entries map of cache IDs to DTOs to store or publish
      */
     void send(Map<String, T> entries);
 }

@@ -59,4 +59,17 @@ class MarketDataBufferHandlerTest {
         // then
         verifyNoInteractions(buffer);
     }
+
+    @Test
+    void handleSkipsBlankKeysAndNullValues() {
+        @SuppressWarnings("unchecked")
+        MarketDataBuffer<String> buffer = mock(MarketDataBuffer.class);
+
+        MarketDataBufferHandler<String> handler = new MarketDataBufferHandler<>(buffer);
+
+        handler.handle("   ", "value");
+        handler.handle("valid", null);
+
+        verify(buffer, never()).put(any(), any());
+    }
 }
