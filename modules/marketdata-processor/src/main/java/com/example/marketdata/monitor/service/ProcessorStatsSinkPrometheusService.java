@@ -5,13 +5,13 @@ import com.example.marketdata.monitor.processor.ProcessorStatsSnapshot;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.util.AtomicDouble;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * {@link ProcessorStatsSink} that exports processor metrics to Micrometer so they can be scraped
@@ -29,7 +29,7 @@ public class ProcessorStatsSinkPrometheusService implements ProcessorStatsSink {
     private final ConcurrentMap<String, AtomicLong> windowEndGauges = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, AtomicLong> minLatencyGauges = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, AtomicLong> maxLatencyGauges = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, AtomicDouble> avgLatencyGauges = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, AtomicReference<Double>> avgLatencyGauges = new ConcurrentHashMap<>();
 
     public ProcessorStatsSinkPrometheusService(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
@@ -94,12 +94,12 @@ public class ProcessorStatsSinkPrometheusService implements ProcessorStatsSink {
     private void updateDoubleGauge(String metricName,
                                    String processorName,
                                    Tags tags,
-                                   ConcurrentMap<String, AtomicDouble> gauges,
+                                   ConcurrentMap<String, AtomicReference<Double>> gauges,
                                    double value,
                                    String baseUnit) {
         gauges.computeIfAbsent(processorName, key -> {
-            AtomicDouble holder = new AtomicDouble(value);
-            Gauge.Builder<AtomicDouble> builder = Gauge.builder(metricName, holder, AtomicDouble::get)
+            AtomicReference<Double> holder = new AtomicReference<>(value);
+            Gauge.Builder<AtomicReference<Double>> builder = Gauge.builder(metricName, holder, AtomicReference::get)
                     .tags(tags);
             if (baseUnit != null) {
                 builder.baseUnit(baseUnit);

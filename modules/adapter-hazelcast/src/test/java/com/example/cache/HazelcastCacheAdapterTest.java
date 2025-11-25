@@ -1,6 +1,5 @@
 package com.example.cache;
 
-import com.example.marketdata.adapter.hazelcast.HazelcastCacheAdapter;
 import com.example.marketdata.model.MarketDataEvent;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;

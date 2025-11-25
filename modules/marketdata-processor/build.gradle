@@ -8,10 +8,14 @@ bootJar { enabled = false }
 jar { enabled = true }
 
 dependencies {
+    implementation project(':adapter-hazelcast')
+    implementation project(':adapter-kafka')
+    implementation project(':adapter-zmq')
+
     implementation 'org.springframework.boot:spring-boot-starter'
-    implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mockito:mockito-core'
 }
