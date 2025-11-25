@@ -5,7 +5,9 @@ import com.hazelcast.core.Hazelcast;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -19,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Confirms that enabling the "all-processors" profile activates every conditional processor
  * and wires the handler with the complete list.
  */
-@SpringBootTest
+@SpringBootTest(classes = AllProcessorsProfileTest.TestConfig.class)
 @ActiveProfiles("all-processors")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class AllProcessorsProfileTest {
@@ -50,5 +52,10 @@ class AllProcessorsProfileTest {
     @AfterAll
     static void shutdownHazelcast() {
         Hazelcast.shutdownAll();
+    }
+
+    @SpringBootConfiguration
+    @ComponentScan("com.example.marketdata")
+    static class TestConfig {
     }
 }
