@@ -8,7 +8,6 @@ bootJar { enabled = false }
 jar { enabled = true }
 
 dependencies {
-    implementation project(':marketdata-core')
-    implementation 'org.springframework.boot:spring-boot-starter'
+    api 'com.fasterxml.jackson.core:jackson-annotations'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

@@ -8,6 +8,7 @@ bootJar { enabled = false }
 jar { enabled = true }
 
 dependencies {
+    implementation project(':marketdata-core')
     implementation project(':adapter-hazelcast')
     implementation project(':adapter-kafka')
     implementation project(':adapter-zmq')
