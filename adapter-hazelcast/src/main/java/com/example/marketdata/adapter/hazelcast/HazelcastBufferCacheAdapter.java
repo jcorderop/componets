@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class HazelcastCacheAdapter<T> implements IHazelcastCacheAdapter<T> {
+public class HazelcastBufferCacheAdapter<T> implements IHazelcastBufferCacheAdapter<T> {
 
     private final HazelcastInstance hazelcastInstance;
     private final String cacheName;
@@ -47,18 +47,18 @@ public class HazelcastCacheAdapter<T> implements IHazelcastCacheAdapter<T> {
     // this cache will have the latest updates and will be resent when Hazelcast is reconnected.
     private final ConcurrentMap<String, String> latestValues = new ConcurrentHashMap<>();
 
-    public HazelcastCacheAdapter(final HazelcastInstance hazelcastInstance,
-                                 @Value("${marketdata.hazelcast.cache-name:default-name}")
-                                 final String cacheName) {
+    public HazelcastBufferCacheAdapter(final HazelcastInstance hazelcastInstance,
+                                       @Value("${marketdata.hazelcast.cache-name:default-name}")
+                                       final String cacheName) {
         this(hazelcastInstance, cacheName, null, null);
     }
 
     @Autowired
-    public HazelcastCacheAdapter(final HazelcastInstance hazelcastInstance,
-                                 @Value("${marketdata.hazelcast.cache-name:default-name}")
-                                 final String cacheName,
-                                 final MarketDataBufferHandler<T> marketDataBufferHandler,
-                                 @Lazy final HazelcastBufferThrottle<T> hazelcastBufferThrottle) {
+    public HazelcastBufferCacheAdapter(final HazelcastInstance hazelcastInstance,
+                                       @Value("${marketdata.hazelcast.cache-name:default-name}")
+                                       final String cacheName,
+                                       final MarketDataBufferHandler<T> marketDataBufferHandler,
+                                       @Lazy final HazelcastBufferThrottle<T> hazelcastBufferThrottle) {
         this.hazelcastInstance = hazelcastInstance;
         this.cacheName = cacheName;
         this.marketDataBufferHandler = marketDataBufferHandler;

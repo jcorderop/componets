@@ -1,13 +1,14 @@
 package com.example.marketdata.processor;
 
+import com.example.marketdata.adapter.hazelcast.HazelcastBufferCacheAdapter;
 import com.example.marketdata.adapter.hazelcast.HazelcastBufferThrottle;
-import com.example.marketdata.adapter.hazelcast.HazelcastCacheAdapter;
 import com.example.marketdata.adapter.hazelcast.config.HazelcastConfiguration;
 import com.example.marketdata.adapter.hazelcast.handler.MarketDataBufferHandler;
 import com.example.marketdata.cache.MarketDataBuffer;
 import com.example.marketdata.config.MarketDataProcessorProperties;
 import com.example.marketdata.model.MarketDataEvent;
 import com.example.marketdata.monitor.processor.ProcessorStatsRegistryImpl;
+import com.example.marketdata.processor.HazelcastMarketDataBufferProcessor;
 import com.example.marketdata.service.ProcessorsHandlerService;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
@@ -98,12 +99,12 @@ class HazelcastAdapterIntegrationTest {
 
     @TestConfiguration
     @Import({
-            HazelcastMarketDataProcessor.class,
+            HazelcastMarketDataBufferProcessor.class,
             ProcessorsHandlerService.class,
             MarketDataProcessorProperties.class,
             ProcessorStatsRegistryImpl.class,
             HazelcastConfiguration.class,
-            HazelcastCacheAdapter.class,
+            HazelcastBufferCacheAdapter.class,
             MarketDataBuffer.class,
             MarketDataBufferHandler.class,
             HazelcastBufferThrottle.class

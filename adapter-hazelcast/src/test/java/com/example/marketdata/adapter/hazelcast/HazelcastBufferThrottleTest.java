@@ -2,6 +2,7 @@
 package com.example.marketdata.adapter.hazelcast;
 
 import com.example.marketdata.cache.MarketDataBuffer;
+import com.example.marketdata.adapter.hazelcast.HazelcastBufferCacheAdapter;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -21,7 +22,7 @@ class HazelcastBufferThrottleTest {
         when(buffer.isEmpty()).thenReturn(true);
 
         @SuppressWarnings("unchecked")
-        HazelcastCacheAdapter<String> adapter = mock(HazelcastCacheAdapter.class);
+        HazelcastBufferCacheAdapter<String> adapter = mock(HazelcastBufferCacheAdapter.class);
 
         // given
         HazelcastBufferThrottle<String> throttle = new HazelcastBufferThrottle<>(buffer, adapter);
@@ -42,7 +43,7 @@ class HazelcastBufferThrottleTest {
         when(buffer.releaseBuffer()).thenReturn(Map.of("k1", "v1", "k2", "v2"));
 
         @SuppressWarnings("unchecked")
-        HazelcastCacheAdapter<String> adapter = mock(HazelcastCacheAdapter.class);
+        HazelcastBufferCacheAdapter<String> adapter = mock(HazelcastBufferCacheAdapter.class);
 
         // given
         HazelcastBufferThrottle<String> throttle = new HazelcastBufferThrottle<>(buffer, adapter);
@@ -64,7 +65,7 @@ class HazelcastBufferThrottleTest {
         when(buffer.releaseBuffer()).thenReturn(Map.of("k1", "v1"));
 
         @SuppressWarnings("unchecked")
-        HazelcastCacheAdapter<String> adapter = mock(HazelcastCacheAdapter.class);
+        HazelcastBufferCacheAdapter<String> adapter = mock(HazelcastBufferCacheAdapter.class);
         doThrow(new RuntimeException("boom")).when(adapter).send(anyMap());
 
         // given

@@ -5,7 +5,7 @@ import com.example.marketdata.model.MarketDataEvent;
 
 import java.util.List;
 
-public interface IHazelcastCacheAdapter<T> extends BaseAdapter<T> {
+public interface IHazelcastBufferCacheAdapter<T> extends BaseAdapter<T> {
 
     void bufferMarketData(List<MarketDataEvent> batch);
 }
