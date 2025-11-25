@@ -2,8 +2,7 @@ package com.example.marketdata.monitor.service;
 
 import com.example.marketdata.monitor.processor.ProcessorStatsSink;
 import com.example.marketdata.monitor.processor.ProcessorStatsSnapshot;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,10 +11,9 @@ import java.util.List;
  * Simple {@link ProcessorStatsSink} that renders each snapshot to the application logs. It is
  * useful for diagnostics or environments where a lightweight reporting mechanism is sufficient.
  */
+@Slf4j
 @Service
 public class ProcessorStatsSinkLoggerService implements ProcessorStatsSink {
-
-    private static final Logger log = LoggerFactory.getLogger(ProcessorStatsSinkLoggerService.class);
 
     @Override
     public void publish(List<ProcessorStatsSnapshot> snapshots) {

@@ -3,10 +3,9 @@ package com.example.marketdata.processor;
 import com.example.marketdata.config.MarketDataProcessorProperties;
 import com.example.marketdata.model.MarketDataEvent;
 import com.example.marketdata.monitor.processor.ProcessorStatsRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -23,9 +22,8 @@ import java.util.List;
         havingValue = "true",
         matchIfMissing = false
 )
+@Slf4j
 public class LoggingMarketDataProcessor extends AbstractMarketDataProcessor {
-
-    private static final Logger log = LoggerFactory.getLogger(LoggingMarketDataProcessor.class);
 
     public LoggingMarketDataProcessor(final MarketDataProcessorProperties props,
                                      final ProcessorStatsRegistry processorStatsRegistry) {

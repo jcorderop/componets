@@ -1,8 +1,7 @@
 package com.example.marketdata.adapter.hazelcast;
 
 import com.example.marketdata.cache.MarketDataBuffer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -19,11 +18,10 @@ import java.util.Map;
  *     between buffer flushes.</li>
  * </ul>
  */
+@Slf4j
 @Component
 @ConditionalOnProperty(prefix = "marketdata.adapters.hazelcast", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class HazelcastBufferThrottle<T> {
-
-    private static final Logger log = LoggerFactory.getLogger(HazelcastBufferThrottle.class);
 
     private final MarketDataBuffer<T> marketDataBuffer;
     private final HazelcastCacheAdapter<T> hazelcastCacheAdapter;
