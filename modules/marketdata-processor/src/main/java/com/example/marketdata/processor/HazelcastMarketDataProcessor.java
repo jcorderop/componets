@@ -1,6 +1,6 @@
 package com.example.marketdata.processor;
 
-import com.example.marketdata.adapter.hazelcast.IHazelcastCacheAdapter;
+import com.example.marketdata.adapter.hazelcast.IHazelcastBufferCacheAdapter;
 import com.example.marketdata.config.MarketDataProcessorProperties;
 import com.example.marketdata.model.MarketDataEvent;
 import com.example.marketdata.monitor.processor.ProcessorStatsRegistry;
@@ -28,11 +28,11 @@ import java.util.List;
 )
 public class HazelcastMarketDataProcessor<T> extends AbstractMarketDataProcessor {
 
-    final IHazelcastCacheAdapter<T> hazelcastCacheAdapter;
+    final IHazelcastBufferCacheAdapter<T> hazelcastCacheAdapter;
 
     public HazelcastMarketDataProcessor(final MarketDataProcessorProperties props,
                                        final ProcessorStatsRegistry processorStatsRegistry,
-                                       final IHazelcastCacheAdapter<T> hazelcastCacheAdapter) {
+                                       final IHazelcastBufferCacheAdapter<T> hazelcastCacheAdapter) {
         super(props, processorStatsRegistry);
         this.hazelcastCacheAdapter = hazelcastCacheAdapter;
         log.info("Created Hazelcast processor");

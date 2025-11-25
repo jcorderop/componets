@@ -5,6 +5,7 @@ import com.example.marketdata.monitor.processor.ProcessorStatsSnapshot;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * via the Prometheus actuator endpoint. Counters are incremented for throughput metrics and gauges
  * expose the latest latency, queue depth and reporting window boundaries per processor.
  */
+@Slf4j
 @Service
 public class ProcessorStatsSinkPrometheusService implements ProcessorStatsSink {
 
@@ -42,6 +44,7 @@ public class ProcessorStatsSinkPrometheusService implements ProcessorStatsSink {
         }
 
         for (ProcessorStatsSnapshot snapshot : snapshots) {
+            log.info("Publishing processor stats snapshot: {}", snapshot);
             Tags tags = Tags.of(TAG_PROCESSOR, snapshot.processorName());
 
             meterRegistry.counter("marketdata.processor.events.enqueued", tags)

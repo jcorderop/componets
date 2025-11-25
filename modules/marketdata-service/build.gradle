@@ -5,6 +5,7 @@ plugins {
 }
 
 dependencies {
+    implementation project(':marketdata-core')
     implementation project(':marketdata-processor')
 
     implementation 'org.springframework.boot:spring-boot-starter'
