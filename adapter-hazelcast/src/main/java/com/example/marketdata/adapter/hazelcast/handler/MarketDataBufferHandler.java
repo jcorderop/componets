@@ -1,8 +1,7 @@
 package com.example.marketdata.adapter.hazelcast.handler;
 
 import com.example.marketdata.cache.MarketDataBuffer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -12,11 +11,10 @@ import java.util.Map;
  * Validates and routes market data entries into the shared buffer that backs Hazelcast
  * cache updates, preventing malformed records from being stored.
  */
+@Slf4j
 @Component
 @ConditionalOnProperty(prefix = "marketdata.adapters.hazelcast", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class MarketDataBufferHandler<T> {
-
-    private static final Logger log = LoggerFactory.getLogger(MarketDataBufferHandler.class);
 
     private final MarketDataBuffer<T> marketDataBuffer;
 

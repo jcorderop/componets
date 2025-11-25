@@ -1,9 +1,8 @@
 package com.example.marketdata.monitor.processor;
 
 import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,10 +20,9 @@ import java.util.concurrent.atomic.LongAdder;
  * so modifications and snapshots never run concurrently. This simplifies reasoning about
  * consistency at the cost of a small amount of extra indirection.
  */
+@Slf4j
 @Component
 public class ProcessorStatsRegistryImpl implements ProcessorStatsRegistry {
-
-    private static final Logger log = LoggerFactory.getLogger(ProcessorStatsRegistryImpl.class);
 
     /**
      * A StatsBucket holds counters for a single processor.

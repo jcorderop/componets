@@ -2,8 +2,7 @@ package com.example.marketdata.service;
 
 import com.example.marketdata.processor.AbstractMarketDataProcessor;
 import com.example.marketdata.model.MarketDataEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,10 +10,9 @@ import java.util.List;
 /**
  * Coordinates incoming market data events and dispatches them to all configured processors.
  */
+@Slf4j
 @Service
 public class ProcessorsHandlerService {
-
-    private static final Logger log = LoggerFactory.getLogger(ProcessorsHandlerService.class);
 
     private final List<AbstractMarketDataProcessor> processors;
 

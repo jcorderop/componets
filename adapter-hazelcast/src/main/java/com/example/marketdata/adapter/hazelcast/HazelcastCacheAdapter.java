@@ -11,8 +11,7 @@ import com.hazelcast.core.LifecycleListener;
 import com.hazelcast.core.LifecycleEvent.LifecycleState;
 import com.hazelcast.map.IMap;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -30,11 +29,10 @@ import java.util.concurrent.ConcurrentMap;
  * Uses {@code marketdata.hazelcast.cache-name} (default {@code default-name}) to determine which
  * Hazelcast map to update and retain a matching shadow cache for reconnection flows.
  */
+@Slf4j
 @Component
 @ConditionalOnProperty(prefix = "marketdata.adapters.hazelcast", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class HazelcastCacheAdapter<T> implements BaseAdapter<T> {
-
-    private static final Logger log = LoggerFactory.getLogger(HazelcastCacheAdapter.class);
 
     private final HazelcastInstance hazelcastInstance;
     private final String cacheName;

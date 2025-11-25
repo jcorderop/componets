@@ -6,8 +6,7 @@ import com.example.marketdata.model.MarketDataProcessorBatchProcessor;
 import com.example.marketdata.model.MarketDataEvent;
 import com.example.marketdata.monitor.processor.ProcessorStatsRegistry;
 import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.SmartLifecycle;
 
 import java.util.ArrayList;
@@ -29,10 +28,9 @@ import java.util.concurrent.*;
  *     {@code retry-backoff-multiplier} – govern exponential retry delays when batch processing fails.</li>
  * </ul>
  */
+@Slf4j
 public abstract class AbstractMarketDataProcessor
         implements MarketDataProcessorBatchProcessor, SmartLifecycle {
-
-    private static final Logger log = LoggerFactory.getLogger(AbstractMarketDataProcessor.class);
 
     private final MarketDataProcessorProperties props;
     private final BlockingQueue<MarketDataEvent> queue;
