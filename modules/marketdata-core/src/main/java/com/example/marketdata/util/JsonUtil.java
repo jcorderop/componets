@@ -20,6 +20,11 @@ public final class JsonUtil {
         return mapper;
     }
 
+    private JsonUtil() {
+        // Prevent instantiation
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     public static String toJson(Object value) {
         try {
             return MAPPER.writeValueAsString(value);
