@@ -1,4 +1,4 @@
-package com.example.marketdata.monitor.consumer;
+package com.example.marketdata.monitor.processor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * Coordinates the periodic publication of consumer metrics by gathering snapshots from the
- * {@link ConsumerStatsRegistry} and forwarding them to every configured {@link ConsumerStatsSink}.
+ * Coordinates the periodic publication of processor metrics by gathering snapshots from the
+ * {@link ProcessorStatsRegistry} and forwarding them to every configured {@link ProcessorStatsSink}.
  * Any individual sink failure is logged and ignored so the scheduled task keeps running.
  * <p>
  * Scheduling is driven by {@code marketdata.stats.interval-ms} (default {@code 60000}) via
@@ -17,37 +17,37 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class ConsumerStatsReporter {
+public class ProcessorStatsReporter {
 
-    private final ConsumerStatsRegistry consumerStatsRegistry;
-    private final List<ConsumerStatsSink> sinks;
+    private final ProcessorStatsRegistry processorStatsRegistry;
+    private final List<ProcessorStatsSink> sinks;
 
-    public ConsumerStatsReporter(ConsumerStatsRegistry registry,
-                                 List<ConsumerStatsSink> sinks) {
-        this.consumerStatsRegistry = registry;
+    public ProcessorStatsReporter(ProcessorStatsRegistry registry,
+                                 List<ProcessorStatsSink> sinks) {
+        this.processorStatsRegistry = registry;
         this.sinks = List.copyOf(sinks);
     }
 
     @Scheduled(fixedRateString = "${marketdata.stats.interval-ms:60000}")
     public void publishStats() {
-        List<ConsumerStatsSnapshot> snapshots = consumerStatsRegistry.snapshotAndReset();
+        List<ProcessorStatsSnapshot> snapshots = processorStatsRegistry.snapshotAndReset();
         if (snapshots.isEmpty()) {
-            log.debug("No consumer stats snapshots to publish");
+            log.debug("No processor stats snapshots to publish");
             return;
         }
 
-        for (ConsumerStatsSink sink : sinks) {
+        for (ProcessorStatsSink sink : sinks) {
             try {
                 sink.publish(snapshots);
             } catch (Exception e) {
                 String sinkName = sink.getClass().getSimpleName();
 
                 if (shouldStopOn(e)) {
-                    log.warn("Consumer stats publishing interrupted while calling sink {}", sinkName, e);
+                    log.warn("Processor stats publishing interrupted while calling sink {}", sinkName, e);
                     return;
                 }
 
-                log.warn("Consumer stats sink {} failed to publish stats", sinkName, e);
+                log.warn("Processor stats sink {} failed to publish stats", sinkName, e);
             }
         }
     }

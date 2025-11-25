@@ -1,8 +1,8 @@
 package com.example.marketdata.adapter.hazelcast;
 
 import com.example.demo.MarketDataMessage;
-import com.example.marketdata.exception.ConsumerRetryableException;
-import com.example.marketdata.exception.ConsumerRuntimeException;
+import com.example.marketdata.exception.ProcessorRetryableException;
+import com.example.marketdata.exception.ProcessorRuntimeException;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -111,7 +111,7 @@ class HazelcastCacheAdapterTest {
      *  3) Hazelcast throws RetryableHazelcastException (cluster instability)
     */
     @Test
-    void hazelcastInstanceNotActiveExceptionBecomesConsumerRuntimeException() throws InterruptedException {
+    void hazelcastInstanceNotActiveExceptionBecomesProcessorRuntimeException() throws InterruptedException {
         // given
         HazelcastCacheAdapter<MarketDataMessage> a =
                 new HazelcastCacheAdapter<>(hz, "market-cache");
@@ -122,7 +122,7 @@ class HazelcastCacheAdapterTest {
         // Cluster instability begins → write will trigger RetryableHazelcastException
         // when
         // then
-        assertThrows(ConsumerRuntimeException.class,
+        assertThrows(ProcessorRuntimeException.class,
                 () -> a.send(Map.of("k1", msg())));
     }
 
@@ -135,7 +135,7 @@ class HazelcastCacheAdapterTest {
      *  3) Hazelcast throws a non-retryable HazelcastException
      */
     @Test
-    void nonRetryableHazelcastExceptionBecomesConsumerRuntimeException() {
+    void nonRetryableHazelcastExceptionBecomesProcessorRuntimeException() {
 
         // given
         HazelcastCacheAdapter<MarketDataMessage> a =
@@ -146,7 +146,7 @@ class HazelcastCacheAdapterTest {
 
         // when
         // then
-        assertThrows(ConsumerRuntimeException.class,
+        assertThrows(ProcessorRuntimeException.class,
                 () -> a.send(Map.of("kX", msg())));
     }
 }

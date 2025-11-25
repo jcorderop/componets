@@ -5,16 +5,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * Configuration properties that control consumer queue sizing, batching, and retry behavior
+ * Configuration properties that control processor queue sizing, batching, and retry behavior
  * for processing inbound market data.
  * <p>
  * Properties (all under {@code marketdata.default}) and how they are applied:
  * <ul>
  *     <li>{@code queue-capacity} (default: {@code 1000000}) – maximum number of events the
- *     consumer queue can hold before producers start dropping new events.</li>
+ *     processor queue can hold before producers start dropping new events.</li>
  *     <li>{@code batch-size} (default: {@code 1000}) – number of events drained from the
- *     queue before invoking {@link com.example.marketdata.model.MarketDataConsumerBatchProcessor#processBatch}.</li>
- *     <li>{@code poll-timeout-millis} (default: {@code 10}) – how long the consumer waits for
+ *     queue before invoking {@link com.example.marketdata.model.MarketDataProcessorBatchProcessor#processBatch}.</li>
+ *     <li>{@code poll-timeout-millis} (default: {@code 10}) – how long the processor waits for
  *     additional events before flushing a partially full batch.</li>
  *     <li>{@code initial-retry-backoff-millis} (default: {@code 1000}) – first sleep duration
  *     when a batch fails with a retryable exception.</li>
@@ -35,15 +35,15 @@ marketdata.default.initial-retry-backoff-millis=1000
 marketdata.default.max-retry-backoff-millis=10000
 marketdata.default.retry-backoff-multiplier=2.0
  */
-public class MarketDataConsumerProperties {
+public class MarketDataProcessorProperties {
 
     /**
-     * Max number of messages in each consumer queue.
+     * Max number of messages in each processor queue.
      */
     private int queueCapacity = 1_000_000;
 
     /**
-     * Batch size used by consumers when draining the queue.
+     * Batch size used by processors when draining the queue.
      */
     private int batchSize = 1_000;
 

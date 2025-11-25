@@ -1,8 +1,8 @@
 package com.example.marketdata.adapter.hazelcast;
 
 import com.example.marketdata.adapter.BaseAdapter;
-import com.example.marketdata.exception.ConsumerRetryableException;
-import com.example.marketdata.exception.ConsumerRuntimeException;
+import com.example.marketdata.exception.ProcessorRetryableException;
+import com.example.marketdata.exception.ProcessorRuntimeException;
 import com.example.marketdata.util.JsonUtil;
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstance;
@@ -111,20 +111,20 @@ public class HazelcastCacheAdapter<T> implements BaseAdapter<T> {
                 log.warn("Retryable Hazelcast error while updating cache {}: {}. " +
                                 "Entries remain in local shadow cache for retry.",
                         cacheName, e.getMessage(), e);
-                throw new ConsumerRetryableException(
+                throw new ProcessorRetryableException(
                         "Retryable Hazelcast error while updating cache " + cacheName, e);
             } else {
                 log.error("Non-retryable Hazelcast error while updating cache {}. " +
-                                "Entries remain in local shadow cache, but this batch will be dropped by the consumer.",
+                                "Entries remain in local shadow cache, but this batch will be dropped by the processor.",
                         cacheName, e);
-                throw new ConsumerRuntimeException("Non-retryable Hazelcast error while updating cache " + cacheName, e);
+                throw new ProcessorRuntimeException("Non-retryable Hazelcast error while updating cache " + cacheName, e);
             }
 
         } catch (RuntimeException e) {
             // Any other runtime exception in the adapter is treated as non-retryable
             log.error("Unexpected runtime error while updating Hazelcast cache {}. " +
                     "Entries remain in local shadow cache.", cacheName, e);
-            throw new ConsumerRuntimeException("Unexpected error while updating cache " + cacheName, e);
+            throw new ProcessorRuntimeException("Unexpected error while updating cache " + cacheName, e);
         }
     }
 

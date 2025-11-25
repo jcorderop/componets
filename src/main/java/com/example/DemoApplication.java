@@ -2,7 +2,7 @@ package com.example;
 
 import com.example.demo.MarketDataMessage;
 import com.example.marketdata.model.MarketDataEvent;
-import com.example.marketdata.service.ConsumersHandlerService;
+import com.example.marketdata.service.ProcessorsHandlerService;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,7 +13,7 @@ import java.time.Instant;
 
 /**
  * Spring Boot entry point that wires the demo application and triggers event publication
- * on startup so downstream consumers receive a steady stream of sample market data.
+ * on startup so downstream processors receive a steady stream of sample market data.
  */
 @SpringBootApplication
 @EnableScheduling
@@ -24,7 +24,7 @@ public class DemoApplication {
     }
 
     @Bean
-    public ApplicationRunner marketDataStartupPublisher(ConsumersHandlerService consumersHandlerService) {
+    public ApplicationRunner marketDataStartupPublisher(ProcessorsHandlerService processorsHandlerService) {
         return args -> {
             double price = 1.0;
             for (int i = 0; i < 100; i++) {
@@ -36,7 +36,7 @@ public class DemoApplication {
                         .size(1_000_000)
                         .timestamp(Instant.now())
                         .build();
-                consumersHandlerService.onEvent(event);
+                processorsHandlerService.onEvent(event);
                 Thread.sleep(1000);
             }
 

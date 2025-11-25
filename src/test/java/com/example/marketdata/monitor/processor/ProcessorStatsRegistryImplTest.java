@@ -1,4 +1,4 @@
-package com.example.marketdata.monitor.consumer;
+package com.example.marketdata.monitor.processor;
 
 import org.junit.jupiter.api.Test;
 
@@ -7,19 +7,19 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Covers the in-memory {@link ConsumerStatsRegistryImpl} implementation to ensure counters and
- * snapshots behave correctly across windows and multiple consumers.
+ * Covers the in-memory {@link ProcessorStatsRegistryImpl} implementation to ensure counters and
+ * snapshots behave correctly across windows and multiple processors.
  */
-class ConsumerStatsRegistryImplTest {
+class ProcessorStatsRegistryImplTest {
 
-    private final ConsumerStatsRegistryImpl registry = new ConsumerStatsRegistryImpl();
+    private final ProcessorStatsRegistryImpl registry = new ProcessorStatsRegistryImpl();
 
     @Test
     void snapshotAndResetReturnsEmptyListWhenNoData() {
         // given
 
         // when
-        List<ConsumerStatsSnapshot> snapshots = registry.snapshotAndReset();
+        List<ProcessorStatsSnapshot> snapshots = registry.snapshotAndReset();
 
         // then
         assertNotNull(snapshots);
@@ -27,24 +27,24 @@ class ConsumerStatsRegistryImplTest {
     }
 
     @Test
-    void recordEnqueueDropAndQueueSizeSingleConsumer() {
+    void recordEnqueueDropAndQueueSizeSingleProcessor() {
         // given
-        String consumer = "consumer-1";
+        String processor = "processor-1";
 
-        registry.recordEnqueue(consumer);
-        registry.recordEnqueue(consumer);
-        registry.recordEnqueue(consumer);
-        registry.recordDrop(consumer);
-        registry.recordQueueSize(consumer, 42);
+        registry.recordEnqueue(processor);
+        registry.recordEnqueue(processor);
+        registry.recordEnqueue(processor);
+        registry.recordDrop(processor);
+        registry.recordQueueSize(processor, 42);
 
         // when
-        List<ConsumerStatsSnapshot> snapshots = registry.snapshotAndReset();
+        List<ProcessorStatsSnapshot> snapshots = registry.snapshotAndReset();
 
         // then
         assertEquals(1, snapshots.size());
 
-        ConsumerStatsSnapshot snapshot = snapshots.get(0);
-        assertEquals(consumer, snapshot.consumerName());
+        ProcessorStatsSnapshot snapshot = snapshots.get(0);
+        assertEquals(processor, snapshot.processorName());
         assertEquals(3L, snapshot.eventsEnqueued());
         assertEquals(0L, snapshot.eventsProcessed());
         assertEquals(1L, snapshot.eventsDropped());
@@ -57,22 +57,22 @@ class ConsumerStatsRegistryImplTest {
     @Test
     void recordBatchProcessedUpdatesCountersAndLatency() {
         // given
-        String consumer = "latency-consumer";
+        String processor = "latency-processor";
 
-        registry.recordBatchProcessed(consumer, 10, 100L);
-        registry.recordBatchProcessed(consumer, 5, 50L);
-        registry.recordQueueSize(consumer, 7);
+        registry.recordBatchProcessed(processor, 10, 100L);
+        registry.recordBatchProcessed(processor, 5, 50L);
+        registry.recordQueueSize(processor, 7);
 
         // when
         long beforeSnapshot = System.currentTimeMillis();
-        List<ConsumerStatsSnapshot> snapshots = registry.snapshotAndReset();
+        List<ProcessorStatsSnapshot> snapshots = registry.snapshotAndReset();
         long afterSnapshot = System.currentTimeMillis();
 
         // then
         assertEquals(1, snapshots.size());
-        ConsumerStatsSnapshot snapshot = snapshots.get(0);
+        ProcessorStatsSnapshot snapshot = snapshots.get(0);
 
-        assertEquals(consumer, snapshot.consumerName());
+        assertEquals(processor, snapshot.processorName());
         assertEquals(15L, snapshot.eventsProcessed());
         assertEquals(0L, snapshot.eventsDropped());
         assertEquals(0L, snapshot.eventsEnqueued());
@@ -91,30 +91,30 @@ class ConsumerStatsRegistryImplTest {
     @Test
     void snapshotAndResetResetsBucketsBetweenWindows() {
         // given
-        String consumer = "reset-consumer";
+        String processor = "reset-processor";
 
-        registry.recordEnqueue(consumer);
-        registry.recordBatchProcessed(consumer, 1, 10L);
+        registry.recordEnqueue(processor);
+        registry.recordBatchProcessed(processor, 1, 10L);
 
         // when
-        List<ConsumerStatsSnapshot> first = registry.snapshotAndReset();
+        List<ProcessorStatsSnapshot> first = registry.snapshotAndReset();
 
         // then
         assertEquals(1, first.size());
-        ConsumerStatsSnapshot s1 = first.get(0);
+        ProcessorStatsSnapshot s1 = first.get(0);
         assertEquals(1L, s1.eventsEnqueued());
         assertEquals(1L, s1.eventsProcessed());
 
         // given
-        registry.recordEnqueue(consumer);
-        registry.recordBatchProcessed(consumer, 2, 20L);
+        registry.recordEnqueue(processor);
+        registry.recordBatchProcessed(processor, 2, 20L);
 
         // when
-        List<ConsumerStatsSnapshot> second = registry.snapshotAndReset();
+        List<ProcessorStatsSnapshot> second = registry.snapshotAndReset();
 
         // then
         assertEquals(1, second.size());
-        ConsumerStatsSnapshot s2 = second.get(0);
+        ProcessorStatsSnapshot s2 = second.get(0);
 
         assertEquals(1L, s2.eventsEnqueued());
         assertEquals(2L, s2.eventsProcessed());
@@ -122,10 +122,10 @@ class ConsumerStatsRegistryImplTest {
     }
 
     @Test
-    void snapshotAndResetHandlesMultipleConsumers() {
+    void snapshotAndResetHandlesMultipleProcessors() {
         // given
-        String c1 = "consumer-A";
-        String c2 = "consumer-B";
+        String c1 = "processor-A";
+        String c2 = "processor-B";
 
         registry.recordEnqueue(c1);
         registry.recordEnqueue(c1);
@@ -135,17 +135,17 @@ class ConsumerStatsRegistryImplTest {
         registry.recordBatchProcessed(c2, 3, 15L);
 
         // when
-        List<ConsumerStatsSnapshot> snapshots = registry.snapshotAndReset();
+        List<ProcessorStatsSnapshot> snapshots = registry.snapshotAndReset();
 
         // then
         assertEquals(2, snapshots.size());
 
-        ConsumerStatsSnapshot s1 = snapshots.stream()
-                .filter(s -> s.consumerName().equals(c1))
+        ProcessorStatsSnapshot s1 = snapshots.stream()
+                .filter(s -> s.processorName().equals(c1))
                 .findFirst()
                 .orElseThrow();
-        ConsumerStatsSnapshot s2 = snapshots.stream()
-                .filter(s -> s.consumerName().equals(c2))
+        ProcessorStatsSnapshot s2 = snapshots.stream()
+                .filter(s -> s.processorName().equals(c2))
                 .findFirst()
                 .orElseThrow();
 

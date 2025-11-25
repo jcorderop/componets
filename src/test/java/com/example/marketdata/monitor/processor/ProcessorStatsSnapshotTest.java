@@ -1,19 +1,19 @@
-package com.example.marketdata.monitor.consumer;
+package com.example.marketdata.monitor.processor;
 
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Verifies that the {@link ConsumerStatsSnapshot} builder wires each field as expected.
+ * Verifies that the {@link ProcessorStatsSnapshot} builder wires each field as expected.
  */
-class ConsumerStatsSnapshotTest {
+class ProcessorStatsSnapshotTest {
 
     @Test
     void builderCreatesSnapshotWithAllFields() {
         // given
-        ConsumerStatsSnapshot snapshot = ConsumerStatsSnapshot.builder()
-                .consumerName("test-consumer")
+        ProcessorStatsSnapshot snapshot = ProcessorStatsSnapshot.builder()
+                .processorName("test-processor")
                 .windowStartMillis(10L)
                 .windowEndMillis(20L)
                 .eventsEnqueued(1L)
@@ -28,7 +28,7 @@ class ConsumerStatsSnapshotTest {
         // when
 
         // then
-        assertEquals("test-consumer", snapshot.consumerName());
+        assertEquals("test-processor", snapshot.processorName());
         assertEquals(10L, snapshot.windowStartMillis());
         assertEquals(20L, snapshot.windowEndMillis());
         assertEquals(1L, snapshot.eventsEnqueued());

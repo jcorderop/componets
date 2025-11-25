@@ -1,4 +1,4 @@
-package com.example.marketdata.monitor.consumer;
+package com.example.marketdata.monitor.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -11,16 +11,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Thread-safe implementation of {@link ConsumerStatsRegistry} that aggregates metrics for each
- * consumer in memory using per-consumer buckets. Each snapshot resets the bucket to start a new
+ * Thread-safe implementation of {@link ProcessorStatsRegistry} that aggregates metrics for each
+ * processor in memory using per-processor buckets. Each snapshot resets the bucket to start a new
  * reporting window while retaining a consistent window start time for the captured metrics.
  */
 @Slf4j
 @Component
-public class ConsumerStatsRegistryImpl implements ConsumerStatsRegistry {
+public class ProcessorStatsRegistryImpl implements ProcessorStatsRegistry {
 
     /**
-     * A StatsBucket holds counters for a single consumer.
+     * A StatsBucket holds counters for a single processor.
      */
     private static class StatsBucket {
         final long windowStartMillis = System.currentTimeMillis();
@@ -39,45 +39,45 @@ public class ConsumerStatsRegistryImpl implements ConsumerStatsRegistry {
 
     private final ConcurrentHashMap<String, StatsBucket> buckets = new ConcurrentHashMap<>();
 
-    private StatsBucket getBucket(String consumer) {
-        return buckets.computeIfAbsent(consumer, k -> new StatsBucket());
+    private StatsBucket getBucket(String processor) {
+        return buckets.computeIfAbsent(processor, k -> new StatsBucket());
     }
 
-    private void safeUpdate(String consumerName, Runnable action) {
+    private void safeUpdate(String processorName, Runnable action) {
         try {
             action.run();
         } catch (Exception e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
-                log.warn("Interrupted while updating consumer stats for {}", consumerName, e);
+                log.warn("Interrupted while updating processor stats for {}", processorName, e);
                 return;
             }
-            log.warn("Failed to update consumer stats for {}", consumerName, e);
+            log.warn("Failed to update processor stats for {}", processorName, e);
         }
     }
 
     @Override
-    public void recordEnqueue(String consumerName) {
-        safeUpdate(consumerName, () -> getBucket(consumerName).eventsEnqueued.increment());
+    public void recordEnqueue(String processorName) {
+        safeUpdate(processorName, () -> getBucket(processorName).eventsEnqueued.increment());
     }
 
     @Override
-    public void recordDrop(String consumerName) {
-        recordDrops(consumerName, 1);
+    public void recordDrop(String processorName) {
+        recordDrops(processorName, 1);
     }
 
     @Override
-    public void recordDrops(String consumerName, int dropCount) {
+    public void recordDrops(String processorName, int dropCount) {
         if (dropCount <= 0) {
             return;
         }
-        safeUpdate(consumerName, () -> getBucket(consumerName).eventsDropped.add(dropCount));
+        safeUpdate(processorName, () -> getBucket(processorName).eventsDropped.add(dropCount));
     }
 
     @Override
-    public void recordBatchProcessed(String consumerName, int batchSize, long durationMillis) {
-        safeUpdate(consumerName, () -> {
-            StatsBucket b = getBucket(consumerName);
+    public void recordBatchProcessed(String processorName, int batchSize, long durationMillis) {
+        safeUpdate(processorName, () -> {
+            StatsBucket b = getBucket(processorName);
 
             b.eventsProcessed.add(batchSize);
             b.totalLatencyMillis.add(durationMillis);
@@ -88,19 +88,19 @@ public class ConsumerStatsRegistryImpl implements ConsumerStatsRegistry {
     }
 
     @Override
-    public void recordQueueSize(String consumerName, int queueSize) {
-        safeUpdate(consumerName, () -> getBucket(consumerName).queueSize.set(queueSize));
+    public void recordQueueSize(String processorName, int queueSize) {
+        safeUpdate(processorName, () -> getBucket(processorName).queueSize.set(queueSize));
     }
 
     @Override
-    public List<ConsumerStatsSnapshot> snapshotAndReset() {
+    public List<ProcessorStatsSnapshot> snapshotAndReset() {
         long now = System.currentTimeMillis();
-        List<ConsumerStatsSnapshot> snapshots = new ArrayList<>();
+        List<ProcessorStatsSnapshot> snapshots = new ArrayList<>();
 
         // Swap buckets atomically
-        for (String consumer : buckets.keySet()) {
+        for (String processor : buckets.keySet()) {
             try {
-                StatsBucket old = buckets.replace(consumer, new StatsBucket());
+                StatsBucket old = buckets.replace(processor, new StatsBucket());
                 if (old == null) continue;
 
                 long eventsProcessed = old.eventsProcessed.sum();
@@ -110,8 +110,8 @@ public class ConsumerStatsRegistryImpl implements ConsumerStatsRegistry {
                         ? ((double) totalLatency / eventsProcessed)
                         : 0.0;
 
-                snapshots.add(ConsumerStatsSnapshot.builder()
-                        .consumerName(consumer)
+                snapshots.add(ProcessorStatsSnapshot.builder()
+                        .processorName(processor)
                         .windowStartMillis(old.windowStartMillis)
                         .windowEndMillis(now)
                         .eventsEnqueued(old.eventsEnqueued.sum())
@@ -123,7 +123,7 @@ public class ConsumerStatsRegistryImpl implements ConsumerStatsRegistry {
                         .queueSizeAtSnapshot(old.queueSize.get())
                         .build());
             } catch (Exception e) {
-                log.warn("Failed to snapshot stats for {}", consumer, e);
+                log.warn("Failed to snapshot stats for {}", processor, e);
             }
         }
 
