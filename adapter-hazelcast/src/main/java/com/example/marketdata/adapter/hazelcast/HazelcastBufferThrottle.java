@@ -24,10 +24,10 @@ import java.util.Map;
 public class HazelcastBufferThrottle<T> {
 
     private final MarketDataBuffer<T> marketDataBuffer;
-    private final HazelcastCacheAdapter<T> hazelcastCacheAdapter;
+    private final HazelcastBufferCacheAdapter<T> hazelcastCacheAdapter;
 
     public HazelcastBufferThrottle(MarketDataBuffer<T> marketDataBuffer,
-                                   HazelcastCacheAdapter<T> hazelcastCacheAdapter) {
+                                   HazelcastBufferCacheAdapter<T> hazelcastCacheAdapter) {
         this.marketDataBuffer = marketDataBuffer;
         this.hazelcastCacheAdapter = hazelcastCacheAdapter;
     }

@@ -39,7 +39,7 @@ class AllProcessorsProfileTest {
         assertNotNull(processorsHandlerService, "ProcessorsHandlerService should be present");
         assertEquals(6, processors.size(), "All six conditional processors should load");
 
-        assertTrue(processors.stream().anyMatch(HazelcastMarketDataProcessor.class::isInstance));
+        assertTrue(processors.stream().anyMatch(HazelcastMarketDataBufferProcessor.class::isInstance));
         assertTrue(processors.stream().anyMatch(KafkaMarketDataProcessor.class::isInstance));
         assertTrue(processors.stream().anyMatch(PostgresMarketDataProcessor.class::isInstance));
         assertTrue(processors.stream().anyMatch(ZMQMarketDataProcessor.class::isInstance));

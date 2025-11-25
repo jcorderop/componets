@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 /**
  * Exercises Hazelcast adapter validation, shadow cache behavior, and retry classification.
  */
-class HazelcastCacheAdapterTest {
+class HazelcastBufferCacheAdapterTest {
 
     private HazelcastInstance hz;
     private IMap<String, String> map;
@@ -42,12 +42,12 @@ class HazelcastCacheAdapterTest {
         }
     }
 
-    private HazelcastCacheAdapter<TestMessage> adapter() {
-        return new HazelcastCacheAdapter<>(hz, "market-cache");
+    private HazelcastBufferCacheAdapter<TestMessage> adapter() {
+        return new HazelcastBufferCacheAdapter<>(hz, "market-cache");
     }
 
-    private HazelcastCacheAdapter<MarketDataEvent> bufferedAdapter(MarketDataBufferHandler<MarketDataEvent> handler) {
-        return new HazelcastCacheAdapter<>(hz, "market-cache", handler, mock(HazelcastBufferThrottle.class));
+    private HazelcastBufferCacheAdapter<MarketDataEvent> bufferedAdapter(MarketDataBufferHandler<MarketDataEvent> handler) {
+        return new HazelcastBufferCacheAdapter<>(hz, "market-cache", handler, mock(HazelcastBufferThrottle.class));
     }
 
     private TestMessage msg() {
@@ -60,7 +60,7 @@ class HazelcastCacheAdapterTest {
 
     @Test
     void sendRequiresEntries() {
-        HazelcastCacheAdapter<TestMessage> a = adapter();
+        HazelcastBufferCacheAdapter<TestMessage> a = adapter();
 
         assertThrows(IllegalArgumentException.class, () -> a.send(null));
         assertThrows(IllegalArgumentException.class, () -> a.send(Map.of()));
@@ -68,7 +68,7 @@ class HazelcastCacheAdapterTest {
 
     @Test
     void sendHappyPathWritesJsonToHazelcast() {
-        HazelcastCacheAdapter<TestMessage> a = adapter();
+        HazelcastBufferCacheAdapter<TestMessage> a = adapter();
 
         a.send(Map.of("cache-1", msg()));
 
@@ -80,7 +80,7 @@ class HazelcastCacheAdapterTest {
 
     @Test
     void sendSkipsInvalidEntries() {
-        HazelcastCacheAdapter<TestMessage> a = adapter();
+        HazelcastBufferCacheAdapter<TestMessage> a = adapter();
 
         a.send(Map.of(
                 "", msg(),
@@ -97,7 +97,7 @@ class HazelcastCacheAdapterTest {
 
     @Test
     void hazelcastInstanceNotActiveExceptionBecomesProcessorRuntimeException() throws InterruptedException {
-        HazelcastCacheAdapter<TestMessage> a = new HazelcastCacheAdapter<>(hz, "market-cache");
+        HazelcastBufferCacheAdapter<TestMessage> a = new HazelcastBufferCacheAdapter<>(hz, "market-cache");
 
         shutdown();
         Thread.sleep(2_000);
@@ -112,7 +112,7 @@ class HazelcastCacheAdapterTest {
 
     @Test
     void cachedEntriesRemainAvailableAfterErrors() {
-        HazelcastCacheAdapter<TestMessage> a = adapter();
+        HazelcastBufferCacheAdapter<TestMessage> a = adapter();
 
         Map<String, TestMessage> entries = Map.of(
                 "cache-1", msg(),
@@ -134,7 +134,7 @@ class HazelcastCacheAdapterTest {
 
     @Test
     void entriesAreConsideredRetryableWhenHazelcastSaysSo() {
-        HazelcastCacheAdapter<TestMessage> a = adapter();
+        HazelcastBufferCacheAdapter<TestMessage> a = adapter();
 
         assertThrows(ProcessorRetryableException.class, () -> {
             hz.shutdown();
@@ -144,7 +144,7 @@ class HazelcastCacheAdapterTest {
 
     @Test
     void entriesAreConsideredNonRetryableWhenHazelcastThrowsRuntimeException() {
-        HazelcastCacheAdapter<TestMessage> a = adapter();
+        HazelcastBufferCacheAdapter<TestMessage> a = adapter();
 
         assertThrows(ProcessorRuntimeException.class, () -> {
             hz.shutdown();
@@ -160,7 +160,7 @@ class HazelcastCacheAdapterTest {
         @SuppressWarnings("unchecked")
         MarketDataBufferHandler<MarketDataEvent> handler = mock(MarketDataBufferHandler.class);
 
-        HazelcastCacheAdapter<MarketDataEvent> a = bufferedAdapter(handler);
+        HazelcastBufferCacheAdapter<MarketDataEvent> a = bufferedAdapter(handler);
 
         List<MarketDataEvent> batch = List.of(new TestEvent("cache-1"), new TestEvent("cache-2"));
 
@@ -178,7 +178,7 @@ class HazelcastCacheAdapterTest {
 
     @Test
     void bufferMarketDataRequiresHandler() {
-        HazelcastCacheAdapter<MarketDataEvent> a = new HazelcastCacheAdapter<>(hz, "market-cache");
+        HazelcastBufferCacheAdapter<MarketDataEvent> a = new HazelcastBufferCacheAdapter<>(hz, "market-cache");
 
         assertThrows(NullPointerException.class, () -> a.bufferMarketData(List.of(new TestEvent("cache-1"))));
     }

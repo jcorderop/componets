@@ -12,7 +12,7 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-public class KafkaProducerAdapter<T> implements IKafkaAdapter<T> {
+public class KafkaProducerAdapter<T> implements IKafkaProducerAdapter<T> {
 
     @Override
     public void send(Map<String, T> entries) {

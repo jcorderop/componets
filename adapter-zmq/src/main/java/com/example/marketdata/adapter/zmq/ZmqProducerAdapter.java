@@ -11,7 +11,7 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-public class ZmqAdapter<T> implements IZmqAdapter<T> {
+public class ZmqProducerAdapter<T> implements IZmqProducerAdapter<T> {
     @Override
     public void send(Map<String, T> entries) {
         log.info("Sending {} entries to ZeroMQ placeholder adapter", entries.size());
