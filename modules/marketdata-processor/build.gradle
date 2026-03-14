@@ -15,10 +15,13 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.opentelemetry:opentelemetry-api:1.39.0'
+    implementation 'io.opentelemetry:opentelemetry-sdk-metrics:1.39.0'
 
     testImplementation 'com.hazelcast:hazelcast-spring'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mockito:mockito-core'
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'io.opentelemetry:opentelemetry-sdk-testing:1.39.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

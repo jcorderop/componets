@@ -1,83 +1,87 @@
 package com.example.marketdata.stats.sink;
 
 import com.example.marketdata.stats.reporter.StatsSnapshot;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Publishes statistics snapshots in Prometheus text exposition format.
- * Converts a flat snapshot to Prometheus metric lines.
+ * Publishes statistics snapshots to Micrometer so they can be scraped by Prometheus.
  */
 @Slf4j
-@RequiredArgsConstructor
 public class PrometheusStatsSink implements IStatsSink {
 
+    private static final String TAG_SNAPSHOT = "snapshot";
+
     private final String metricPrefix;
+    private final MeterRegistry meterRegistry;
+    private final ConcurrentMap<String, AtomicLong> gaugeHolders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, AtomicReference<Double>> doubleGaugeHolders = new ConcurrentHashMap<>();
+
+    public PrometheusStatsSink(String metricPrefix, MeterRegistry meterRegistry) {
+        this.metricPrefix = metricPrefix;
+        this.meterRegistry = meterRegistry;
+    }
 
     @Override
     public void publish(final StatsSnapshot snapshot) {
-        final List<String> metrics = new ArrayList<>();
-        collectMetrics(snapshot, metrics);
-
-        if (metrics.isEmpty()) {
-            log.info("=== Prometheus Metrics: {} (empty) ===", snapshot.name());
-            return;
-        }
-
-        log.info("=== Prometheus Metrics: {} ===", snapshot.name());
-        metrics.forEach(log::info);
-
-        // Here you would typically push to Prometheus Pushgateway
-        // or expose via HTTP endpoint for scraping
-    }
-
-    private void collectMetrics(final StatsSnapshot snapshot, final List<String> metrics) {
-        final String snapshotLabel = escapeLabel(snapshot.name());
+        final String snapshotName = snapshot.name();
+        final Tags tags = Tags.of(TAG_SNAPSHOT, snapshotName);
 
         snapshot.counters().forEach((name, value) -> {
             final String metricName = sanitize(metricPrefix + "_" + name + "_total");
-            addMetricHeader(metrics, metricName, "counter");
-            metrics.add(String.format("%s{snapshot=\"%s\"} %d", metricName, snapshotLabel, value));
+            meterRegistry.counter(metricName, tags).increment(value);
         });
 
         snapshot.gauges().forEach((name, value) -> {
             final String metricName = sanitize(metricPrefix + "_" + name);
-            addMetricHeader(metrics, metricName, "gauge");
-            metrics.add(String.format("%s{snapshot=\"%s\"} %d", metricName, snapshotLabel, value));
+            updateLongGauge(metricName, snapshotName, tags, value);
         });
 
         snapshot.latencies().forEach((name, latency) -> {
             final String avgMetricName = sanitize(metricPrefix + "_" + name + "_avg_ms");
-            addMetricHeader(metrics, avgMetricName, "gauge");
-            metrics.add(String.format("%s{snapshot=\"%s\"} %.4f", avgMetricName, snapshotLabel, latency.avg()));
+            updateDoubleGauge(avgMetricName, snapshotName, tags, latency.avg());
 
             final String maxMetricName = sanitize(metricPrefix + "_" + name + "_max_ms");
-            addMetricHeader(metrics, maxMetricName, "gauge");
-            metrics.add(String.format("%s{snapshot=\"%s\"} %.4f", maxMetricName, snapshotLabel, latency.max()));
+            updateDoubleGauge(maxMetricName, snapshotName, tags, latency.max());
         });
+
+        if (snapshot.counters().isEmpty() && snapshot.gauges().isEmpty() && snapshot.latencies().isEmpty()) {
+            log.info("PrometheusStatsSink received empty snapshot {}", snapshotName);
+        }
     }
 
-    private void addMetricHeader(final List<String> metrics, final String metricName, final String metricType) {
-        metrics.add("# TYPE " + metricName + " " + metricType);
+    private void updateLongGauge(String metricName, String snapshotName, Tags tags, long value) {
+        gaugeHolders.computeIfAbsent(metricKey(metricName, snapshotName), key -> {
+            AtomicLong holder = new AtomicLong(value);
+            Gauge.builder(metricName, holder, AtomicLong::get)
+                    .tags(tags)
+                    .register(meterRegistry);
+            return holder;
+        }).set(value);
+    }
+
+    private void updateDoubleGauge(String metricName, String snapshotName, Tags tags, double value) {
+        doubleGaugeHolders.computeIfAbsent(metricKey(metricName, snapshotName), key -> {
+            AtomicReference<Double> holder = new AtomicReference<>(value);
+            Gauge.builder(metricName, holder, AtomicReference::get)
+                    .tags(tags)
+                    .register(meterRegistry);
+            return holder;
+        }).set(value);
+    }
+
+    private String metricKey(String metricName, String snapshotName) {
+        return metricName + "|" + snapshotName;
     }
 
     private String sanitize(final String name) {
-        return name.toLowerCase()
-                .replace("-", "_")
-                .replace(":", "_")
-                .replace('.', '_')
-                .replaceAll("[^a-z0-9_]", "_")
-                .replaceAll("_+", "_")
-                .replaceAll("^_+|_+$", "");
-    }
-
-    private String escapeLabel(final String labelValue) {
-        return labelValue
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n");
+        return name.toLowerCase().replace('.', '_');
     }
 }
