@@ -53,9 +53,9 @@ public final class MetricName {
     public static final String CONSUMED_BPIPE_EVENTS = CONSUMED_PREFIX + CONSUMER_BPIPE + METRIC_EVENTS;
 
     // Pipeline stage metrics
-    public static final String PIPELINE_RECEIVED_EVENTS = PIPELINE_PREFIX + "receivedEvents";
+    public static final String PIPELINE_RECEIVED_EVENTS = PIPELINE_PREFIX + "received" + METRIC_EVENTS;
     public static final String PIPELINE_LATENCY = PIPELINE_PREFIX + METRIC_LATENCY_MS;
-    public static final String PIPELINE_FORWARDED_EVENTS = PIPELINE_PREFIX + "forwardedEvents";
+    public static final String PIPELINE_FORWARDED_EVENTS = PIPELINE_PREFIX + "forwarded" + METRIC_EVENTS;
 
     // Dispatched stage - ZMQ
     public static final String DISPATCHED_EVENTS = DISPATCHED_PREFIX + DISPATCHER_ZMQ + METRIC_EVENTS;

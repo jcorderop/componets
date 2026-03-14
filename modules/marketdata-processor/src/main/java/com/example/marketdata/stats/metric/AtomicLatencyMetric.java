@@ -1,27 +1,38 @@
 package com.example.marketdata.stats.metric;
 
-import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class AtomicLatencyMetric implements ILatencyMetric {
 
-    private final LongAdder count = new LongAdder();
-    private final LongAdder latency = new LongAdder();
-    private final AtomicLong max = new AtomicLong();
+    private static final class State {
+        private final AtomicLong count = new AtomicLong();
+        private final AtomicLong total = new AtomicLong();
+        private final AtomicLong max = new AtomicLong();
+
+        void record(long latency) {
+            count.incrementAndGet();
+            total.addAndGet(latency);
+            max.accumulateAndGet(latency, Math::max);
+        }
+    }
+
+    private final AtomicReference<State> current = new AtomicReference<>(new State());
 
     @Override
     public void record(final long latency) {
-        this.count.increment();
-        this.latency.add(latency);
-        this.max.updateAndGet(prev -> Math.max(prev, latency));
+        current.get().record(latency);
     }
 
     @Override
     public LatencyValues snapshotAndReset() {
-        final long capturedCount = count.sumThenReset();
-        final long capturedMax = max.getAndSet(0);
-        final long capturedLatency = latency.sumThenReset();
-        final var capturedAvg = capturedCount > 0 ? (double) capturedLatency / capturedCount : 0.0;
-        return new LatencyValues(capturedAvg, capturedMax);
+        State captured = current.getAndSet(new State());
+
+        long capturedCount = captured.count.get();
+        long capturedTotal = captured.total.get();
+        long capturedMax = captured.max.get();
+
+        double avg = capturedCount > 0 ? (double) capturedTotal / capturedCount : 0.0;
+        return new LatencyValues(avg, capturedMax);
     }
 }

@@ -51,6 +51,7 @@ public class ServiceStatsCollector implements IStatsCollector {
      * @return counter metric instance for that name
      */
     public ICounterMetric counter(final String statsName) {
+        validateMetricName(statsName);
         return counters.computeIfAbsent(statsName, k -> new AtomicCounterMetric());
     }
 
@@ -61,6 +62,7 @@ public class ServiceStatsCollector implements IStatsCollector {
      * @return gauge metric instance for that name
      */
     public IGaugeMetric gauge(final String statsName) {
+        validateMetricName(statsName);
         return gauges.computeIfAbsent(statsName, k -> new AtomicGaugeMetric());
     }
 
@@ -71,6 +73,7 @@ public class ServiceStatsCollector implements IStatsCollector {
      * @return latency metric instance for that name
      */
     public ILatencyMetric latency(final String statsName) {
+        validateMetricName(statsName);
         return latencies.computeIfAbsent(statsName, k -> new AtomicLatencyMetric());
     }
 
@@ -105,5 +108,11 @@ public class ServiceStatsCollector implements IStatsCollector {
                 gaugeSnapshot,
                 latencySnapshot
         );
+    }
+
+    private static void validateMetricName(String statsName) {
+        if (!AllowedMetricNames.ALL.contains(statsName)) {
+            throw new IllegalArgumentException("Unknown metric name: [" + statsName + "]");
+        }
     }
 }

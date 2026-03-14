@@ -14,16 +14,13 @@ public record StatsSnapshot(
         Map<String, LatencySnapshot> latencies
 ) {
     public StatsSnapshot {
-        counters = Collections.unmodifiableMap(counters);
-        gauges = Collections.unmodifiableMap(gauges);
-        latencies = Collections.unmodifiableMap(latencies);
+        counters = Map.copyOf(counters);
+        gauges = Map.copyOf(gauges);
+        latencies = Map.copyOf(latencies);
     }
 
-    /**
-     * Immutable snapshot of latency metrics.
-     */
     public record LatencySnapshot(
             double avg,
-            double max
+            long max
     ) {}
 }

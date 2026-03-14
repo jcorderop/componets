@@ -1,18 +1,18 @@
 package com.example.marketdata.stats.metric;
 
-import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class AtomicCounterMetric implements ICounterMetric {
 
-    private final LongAdder counter = new LongAdder();
+    private final AtomicLong counter = new AtomicLong();
 
     @Override
     public void add(final long delta) {
-        counter.add(delta);
+        counter.addAndGet(delta);
     }
 
     @Override
     public long sumThenReset() {
-        return counter.sumThenReset();
+        return counter.getAndSet(0);
     }
 }
