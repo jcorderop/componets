@@ -21,7 +21,7 @@ public final class MetricName {
     private static final String METRIC_EVENTS_DROPPED = METRIC_EVENTS + "." + "dropped";
     private static final String METRIC_QUEUE_SIZE = ".queue.size";
 
-    private static final String METRIC_LATENCY = ".latency.";
+    private static final String METRIC_LATENCY = "latency";
     private static final String MILLISECONDS = ".ms";
     private static final String METRIC_LATENCY_MS = METRIC_LATENCY + MILLISECONDS;
 

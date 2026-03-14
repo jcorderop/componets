@@ -32,7 +32,7 @@ public class ServiceStatsCollector implements IStatsCollector {
     }
 
     @Autowired
-    public ServiceStatsCollector(@Value("${marketdata.stats.snapshot.name:service}") String snapshotName) {
+    public ServiceStatsCollector(@Value("${marketdata.stats.snapshot.name:default_service}") String snapshotName) {
         this.snapshotName = snapshotName;
     }
 
