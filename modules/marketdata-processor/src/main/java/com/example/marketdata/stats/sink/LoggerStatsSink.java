@@ -13,22 +13,24 @@ import org.springframework.stereotype.Component;
 public class LoggerStatsSink implements IStatsSink {
 
     @Override
-    public void publish(StatsSnapshot snapshot) {
+    public void publish(final StatsSnapshot snapshot) {
+        if (snapshot.counters().isEmpty() && snapshot.gauges().isEmpty() && snapshot.latencies().isEmpty()) {
+            log.info("=== Statistics Report: {} (empty) ===", snapshot.name());
+            return;
+        }
+
         log.info("=== Statistics Report: {} ===", snapshot.name());
-        // Print counters
+
         snapshot.counters().forEach((name, value) ->
                 log.info("counter.{} = {}", name, value));
 
-        // Print gauges
         snapshot.gauges().forEach((name, value) ->
                 log.info("gauge.{} = {}", name, value));
 
-        // Print latencies
         snapshot.latencies().forEach((name, latency) ->
-                log.info("latency.{} = {{count={}, avg={} µs, max={} µs}}",
-                        name, latency.count(),
-                        String.format("%.2f", latency.avgMicros()),
-                        latency.maxMicros()));
+                log.info("latency.{} = {{avg={} ms, max={} ms}}",
+                        name,
+                        String.format("%.2f", latency.avg()),
+                        String.format("%.2f", latency.max())));
     }
-
 }

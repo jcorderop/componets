@@ -19,6 +19,7 @@ public final class MetricName {
     // Metric suffixes (protected - building blocks)
     private static final String METRIC_EVENTS = ".events";
     private static final String METRIC_EVENTS_DROPPED = METRIC_EVENTS + "." + "dropped";
+    private static final String METRIC_QUEUE_SIZE = ".queue.size";
 
     private static final String METRIC_LATENCY = ".latency.";
     private static final String MILLISECONDS = ".ms";
@@ -60,16 +61,19 @@ public final class MetricName {
     public static final String DISPATCHED_EVENTS = DISPATCHED_PREFIX + DISPATCHER_ZMQ + METRIC_EVENTS;
     public static final String DISPATCHED_ZMQ_LATENCY_MS = DISPATCHED_PREFIX + DISPATCHER_ZMQ + METRIC_LATENCY_MS;
     public static final String DISPATCHED_ZMQ_EVENTS_DROPPED = DISPATCHED_PREFIX + DISPATCHER_ZMQ + METRIC_EVENTS_DROPPED;
+    public static final String DISPATCHED_ZMQ_QUEUE_SIZE = DISPATCHED_PREFIX + DISPATCHER_ZMQ + METRIC_QUEUE_SIZE;
 
     // Dispatched stage - Hazelcast
     public static final String DISPATCHED_HAZELCAST_EVENTS = DISPATCHED_PREFIX + DISPATCHER_HAZELCAST + METRIC_EVENTS;
     public static final String DISPATCHED_HAZELCAST_LATENCY_MS = DISPATCHED_PREFIX + DISPATCHER_HAZELCAST + METRIC_LATENCY_MS;
     public static final String DISPATCHED_HAZELCAST_EVENTS_DROPPED = DISPATCHED_PREFIX + DISPATCHER_HAZELCAST + METRIC_EVENTS_DROPPED;
+    public static final String DISPATCHED_HAZELCAST_QUEUE_SIZE = DISPATCHED_PREFIX + DISPATCHER_HAZELCAST + METRIC_QUEUE_SIZE;
 
     // Dispatched stage - Kafka
     public static final String DISPATCHED_KAFKA_EVENTS = DISPATCHED_PREFIX + DISPATCHER_KAFKA + METRIC_EVENTS;
     public static final String DISPATCHED_KAFKA_LATENCY_MS = DISPATCHED_PREFIX + DISPATCHER_KAFKA + METRIC_LATENCY_MS;
     public static final String DISPATCHED_KAFKA_EVENTS_DROPPED = DISPATCHED_PREFIX + DISPATCHER_KAFKA + METRIC_EVENTS_DROPPED;
+    public static final String DISPATCHED_KAFKA_QUEUE_SIZE = DISPATCHED_PREFIX + DISPATCHER_KAFKA + METRIC_QUEUE_SIZE;
 
     // Storage stage - Postgres
     public static final String STORAGE_POSTGRES_EVENTS = STORAGE_PREFIX + STORAGE_POSTGRES + METRIC_EVENTS;
