@@ -24,9 +24,6 @@ public class StatsReporter {
     private final IStatsCollector collector;
     private final List<IStatsSink> sinks;
 
-    @Value("${stats.reporter.fixed-rate-millis:60000}")
-    private long fixedRateMillis;
-
     /**
      * Automatically triggered at configured interval (default: 1 minute) by Spring scheduler.
      * Takes a snapshot of all metrics, publishes to all configured sinks, and resets metrics.

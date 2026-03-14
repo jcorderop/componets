@@ -8,7 +8,6 @@ public interface ILatencyMetric {
 
     // Internal accessors for snapshot export
     long count();
-    long total();
 
     /**
      * Atomically snapshot all values and reset to zero.
