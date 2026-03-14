@@ -3,7 +3,7 @@ package com.example.marketdata.stats.example;
 import com.example.marketdata.stats.collector.MetricName;
 import com.example.marketdata.stats.collector.ServiceStatsCollector;
 import com.example.marketdata.stats.reporter.StatsSnapshot;
-import com.example.marketdata.stats.sink.LoggerStatsSink;
+import com.example.marketdata.stats.sink.LoggerStatsSinkService;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -53,9 +53,9 @@ public class SimpleUsageExample {
         stats.latency(MetricName.STORAGE_ORACLE_LATENCY_MS).record(320);
         stats.counter(MetricName.STORAGE_ORACLE_EVENTS_DROPPED).add(1);
 
-        // Show exactly how metrics are logged by LoggerStatsSink
+        // Show exactly how metrics are logged by LoggerStatsSinkService
         StatsSnapshot snapshot = stats.snapshotAndReset();
-        new LoggerStatsSink().publish(snapshot);
+        new LoggerStatsSinkService().publish(snapshot);
 
         log.info("Simple example complete.");
     }

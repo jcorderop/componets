@@ -5,6 +5,9 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -15,7 +18,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * Publishes statistics snapshots to Micrometer so they can be scraped by Prometheus.
  */
 @Slf4j
-public class PrometheusStatsSink implements IStatsSink {
+@Service
+@ConditionalOnProperty(prefix = "stats.sink.prometheus", name = "enabled", havingValue = "true")
+public class PrometheusStatsSinkService implements IStatsSink {
 
     private static final String TAG_SNAPSHOT = "snapshot";
 
@@ -24,7 +29,9 @@ public class PrometheusStatsSink implements IStatsSink {
     private final ConcurrentMap<String, AtomicLong> gaugeHolders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, AtomicReference<Double>> doubleGaugeHolders = new ConcurrentHashMap<>();
 
-    public PrometheusStatsSink(String metricPrefix, MeterRegistry meterRegistry) {
+    public PrometheusStatsSinkService(
+            @Value("${stats.sink.prometheus.metric-prefix:marketdata_stats}") String metricPrefix,
+            MeterRegistry meterRegistry) {
         this.metricPrefix = metricPrefix;
         this.meterRegistry = meterRegistry;
     }
@@ -53,7 +60,7 @@ public class PrometheusStatsSink implements IStatsSink {
         });
 
         if (snapshot.counters().isEmpty() && snapshot.gauges().isEmpty() && snapshot.latencies().isEmpty()) {
-            log.info("PrometheusStatsSink received empty snapshot {}", snapshotName);
+            log.info("PrometheusStatsSinkService received empty snapshot {}", snapshotName);
         }
     }
 

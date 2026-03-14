@@ -2,7 +2,7 @@ package com.example.marketdata.stats.example;
 
 import com.example.marketdata.stats.collector.MetricName;
 import com.example.marketdata.stats.collector.ServiceStatsCollector;
-import com.example.marketdata.stats.sink.LoggerStatsSink;
+import com.example.marketdata.stats.sink.LoggerStatsSinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -29,8 +29,8 @@ public class SpringBootUsageExample implements CommandLineRunner {
 
         simulateMarketDataProcessing();
 
-        // Optional immediate preview of what LoggerStatsSink logs.
-        new LoggerStatsSink().publish(stats.snapshotAndReset());
+        // Optional immediate preview of what LoggerStatsSinkService logs.
+        new LoggerStatsSinkService().publish(stats.snapshotAndReset());
 
         log.info("Stats collection example complete. StatsReporter will publish every minute.");
     }
