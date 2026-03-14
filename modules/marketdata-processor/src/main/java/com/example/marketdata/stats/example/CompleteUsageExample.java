@@ -126,6 +126,15 @@ public class CompleteUsageExample {
             }
         }
 
+        // Gauge usage (e.g., current in-memory queue depth)
+        stats.gauge(MetricName.FORWARD_ZMQ_QUEUE_SIZE).set(27);
+
+        // Optional direct reads from latency metric API
+        double latestPipelineAvg = stats.latency(MetricName.PIPELINE_LATENCY_AVG_MS).avg();
+        long latestPipelineMax = stats.latency(MetricName.PIPELINE_LATENCY_MAX_MS).max();
+        log.info("Current ZMQ queue depth={}, pipeline avg={}, pipeline max={}",
+                stats.gauge(MetricName.FORWARD_ZMQ_QUEUE_SIZE).value(), latestPipelineAvg, latestPipelineMax);
+
         log.info("Processing complete.");
     }
 }

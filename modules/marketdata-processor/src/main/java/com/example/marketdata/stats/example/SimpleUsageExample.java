@@ -35,6 +35,16 @@ public class SimpleUsageExample {
         stats.latency(MetricName.DISPATCHED_HAZELCAST_MAX_MS).record(120);
         stats.latency(MetricName.DISPATCHED_HAZELCAST_AVG_MS).record(95);
 
+        // Gauge usage (queue depth style metric)
+        stats.gauge(MetricName.FORWARD_ZMQ_QUEUE_SIZE).set(15);
+        long currentQueueDepth = stats.gauge(MetricName.FORWARD_ZMQ_QUEUE_SIZE).value();
+
+        // Direct latency read helpers (point-in-time, eventually consistent under concurrent writes)
+        double pipelineAvg = stats.latency(MetricName.PIPELINE_LATENCY_AVG_MS).avg();
+        long pipelineMax = stats.latency(MetricName.PIPELINE_LATENCY_MAX_MS).max();
+
+        log.info("Queue depth={}, pipeline avg={}, pipeline max={}", currentQueueDepth, pipelineAvg, pipelineMax);
+
         log.info("Stats recorded.");
     }
 }
