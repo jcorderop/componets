@@ -1,8 +1,11 @@
 package com.example.marketdata.stats.metric;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Slf4j
 public class AtomicLatencyMetric implements ILatencyMetric {
 
     private static final class State {
@@ -21,7 +24,11 @@ public class AtomicLatencyMetric implements ILatencyMetric {
 
     @Override
     public void record(final long latency) {
-        current.get().record(latency);
+        if (latency >= 0) {
+            current.get().record(latency);
+        } else {
+            log.warn("Invalid value for gauge metric: [{}]", latency);
+        }
     }
 
     @Override
