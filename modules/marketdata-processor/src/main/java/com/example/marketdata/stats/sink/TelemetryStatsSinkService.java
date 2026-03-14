@@ -8,6 +8,9 @@ import io.opentelemetry.api.metrics.ObservableDoubleGauge;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.ObservableLongGauge;
 import io.opentelemetry.api.metrics.Meter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -18,7 +21,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * Publishes stats snapshots using OpenTelemetry metrics SDK.
  * Designed for telemetry/APM pipelines (for example APM -> Elastic).
  */
-public class TelemetryStatsSink implements IStatsSink {
+@Service
+@ConditionalOnProperty(prefix = "marketdata.stats.sink.telemetry", name = "enabled", havingValue = "true")
+public class TelemetryStatsSinkService implements IStatsSink {
 
     private static final AttributeKey<String> SNAPSHOT_KEY = AttributeKey.stringKey("snapshot");
 
@@ -32,11 +37,14 @@ public class TelemetryStatsSink implements IStatsSink {
     private final ConcurrentMap<String, ObservableLongGauge> longGauges = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, ObservableDoubleGauge> doubleGauges = new ConcurrentHashMap<>();
 
-    public TelemetryStatsSink(String metricPrefix, OpenTelemetry openTelemetry) {
+    public TelemetryStatsSinkService(
+            @Value("${marketdata.stats.sink.telemetry.metric-prefix:marketdata}") String metricPrefix,
+            OpenTelemetry openTelemetry
+    ) {
         this(metricPrefix, openTelemetry.getMeter("marketdata.stats.telemetry"));
     }
 
-    TelemetryStatsSink(String metricPrefix, Meter meter) {
+    TelemetryStatsSinkService(String metricPrefix, Meter meter) {
         this.metricPrefix = metricPrefix;
         this.meter = meter;
     }

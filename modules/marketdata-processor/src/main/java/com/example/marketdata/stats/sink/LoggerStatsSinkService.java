@@ -2,15 +2,17 @@ package com.example.marketdata.stats.sink;
 
 import com.example.marketdata.stats.reporter.StatsSnapshot;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
 
 /**
  * Publishes statistics snapshots to logs.
  * Formats flat snapshot metrics in a readable way.
  */
 @Slf4j
-@Component
-public class LoggerStatsSink implements IStatsSink {
+@Service
+@ConditionalOnProperty(prefix = "marketdata.stats.sink.logger", name = "enabled", havingValue = "true")
+public class LoggerStatsSinkService implements IStatsSink {
 
     @Override
     public void publish(final StatsSnapshot snapshot) {

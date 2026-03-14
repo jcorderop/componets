@@ -18,7 +18,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class TelemetryStatsSinkTest {
+class TelemetryStatsSinkServiceTest {
 
     private static final AttributeKey<String> SNAPSHOT = AttributeKey.stringKey("snapshot");
 
@@ -37,7 +37,7 @@ class TelemetryStatsSinkTest {
 
     @Test
     void publishExportsCountersAndGaugesForApmPipeline() {
-        TelemetryStatsSink sink = new TelemetryStatsSink("marketdata_telemetry", openTelemetry);
+        TelemetryStatsSinkService sink = new TelemetryStatsSinkService("marketdata_telemetry", openTelemetry);
 
         sink.publish(new StatsSnapshot(
                 "snapshot-a",
@@ -55,7 +55,7 @@ class TelemetryStatsSinkTest {
 
     @Test
     void publishAccumulatesCounterAndUpdatesGaugeValues() {
-        TelemetryStatsSink sink = new TelemetryStatsSink("md", openTelemetry);
+        TelemetryStatsSinkService sink = new TelemetryStatsSinkService("md", openTelemetry);
 
         sink.publish(new StatsSnapshot(
                 "snapshot-a",

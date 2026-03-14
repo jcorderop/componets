@@ -7,7 +7,7 @@ Simple, thread-safe statistics collection for market-data processing.
 - Flat metric API via `ServiceStatsCollector` (`counter`, `gauge`, `latency`)
 - Spring Boot auto-wiring with scheduled reporting (`StatsReporter`)
 - Snapshot-based reporting (`snapshotAndReset`) for fixed reporting windows
-- Pluggable sinks (`LoggerStatsSink`, `PrometheusStatsSink`, custom)
+- Pluggable sinks (`LoggerStatsSinkService`, `PrometheusStatsSinkService`, `TelemetryStatsSinkService`, custom)
 - Canonical metric-name constants in `MetricName`
 - Gauge semantics optimized for peak values via `setMax(...)`
 
@@ -45,6 +45,28 @@ Configure interval if needed:
 stats.reporter.fixed-rate-millis=60000
 ```
 
+
+### Sink enablement (Spring Boot)
+
+Each built-in sink is a Spring `@Service` and is created only when explicitly enabled:
+
+| Sink service | Enable property | Extra property |
+|---|---|---|
+| `LoggerStatsSinkService` | `marketdata.stats.sink.logger.enabled=true` | n/a |
+| `PrometheusStatsSinkService` | `marketdata.stats.sink.prometheus.enabled=true` | `marketdata.stats.sink.prometheus.metric-prefix` (default: `marketdata`) |
+| `TelemetryStatsSinkService` | `marketdata.stats.sink.telemetry.enabled=true` | `marketdata.stats.sink.telemetry.metric-prefix` (default: `marketdata`) |
+
+`StatsReporter` is injected with `List<IStatsSink>`, so it publishes only to enabled sink instances.
+
+Example:
+
+```properties
+marketdata.stats.sink.logger.enabled=true
+marketdata.stats.sink.prometheus.enabled=true
+marketdata.stats.sink.prometheus.metric-prefix=marketdata
+marketdata.stats.sink.telemetry.enabled=false
+```
+
 Set a custom snapshot name (used in logs and sink labels) if needed:
 
 ```properties
@@ -76,7 +98,7 @@ stats.reporter.fixed-rate-millis=60000
 
 ```java
 ServiceStatsCollector stats = new ServiceStatsCollector("marketdata");
-IStatsSink sink = new LoggerStatsSink();
+IStatsSink sink = new LoggerStatsSinkService();
 
 stats.counter(MetricName.CONSUMED_EVENTS).add(10);
 stats.latency(MetricName.PIPELINE_LATENCY).record(150);
@@ -143,7 +165,7 @@ All maps are immutable from the consumer perspective.
 
 ## Built-in sinks
 
-### LoggerStatsSink
+### LoggerStatsSinkService
 
 Logs metrics in a readable format:
 
@@ -153,7 +175,7 @@ Logs metrics in a readable format:
 
 When snapshot is empty, logs one `(empty)` line.
 
-### PrometheusStatsSink
+### PrometheusStatsSinkService
 
 Exports metrics to Micrometer `MeterRegistry` so they can be scraped via Prometheus actuator endpoints, including:
 
@@ -162,9 +184,9 @@ Exports metrics to Micrometer `MeterRegistry` so they can be scraped via Prometh
 - Counter suffix `_total`
 - Latency metrics as `<metric>_avg_ms` and `<metric>_max_ms` gauges
 
-### TelemetryStatsSink
+### TelemetryStatsSinkService
 
-Exports metrics with the OpenTelemetry SDK (`OpenTelemetry`/`Meter`) for telemetry/APM pipelines (for example, APM -> Elastic), using the same naming and `snapshot` tagging model as `PrometheusStatsSink`.
+Exports metrics with the OpenTelemetry SDK (`OpenTelemetry`/`Meter`) for telemetry/APM pipelines (for example, APM -> Elastic), using the same naming and `snapshot` tagging model as `PrometheusStatsSinkService`.
 
 ---
 
@@ -233,6 +255,6 @@ The stats module includes dedicated unit tests for:
 - Metric primitives (`AtomicCounterMetric`, `AtomicGaugeMetric`, `AtomicLatencyMetric`)
 - Collector snapshot/reset behavior (`ServiceStatsCollector`)
 - Snapshot immutability (`StatsSnapshot`)
-- Sink formatting and empty behavior (`LoggerStatsSink`, `PrometheusStatsSink`)
+- Sink formatting and empty behavior (`LoggerStatsSinkService`, `PrometheusStatsSinkService`)
 - Reporter orchestration/error isolation (`StatsReporter`)
 - Metric constants integrity (`MetricName`)

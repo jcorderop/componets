@@ -13,9 +13,9 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class LoggerStatsSinkTest {
+class LoggerStatsSinkServiceTest {
 
-    private final Logger logger = (Logger) LoggerFactory.getLogger(LoggerStatsSink.class);
+    private final Logger logger = (Logger) LoggerFactory.getLogger(LoggerStatsSinkService.class);
     private final ListAppender<ILoggingEvent> appender = new ListAppender<>();
 
     @AfterEach
@@ -26,7 +26,7 @@ class LoggerStatsSinkTest {
 
     @Test
     void publishLogsEmptySnapshotMessage() {
-        LoggerStatsSink sink = new LoggerStatsSink();
+        LoggerStatsSinkService sink = new LoggerStatsSinkService();
         appender.start();
         logger.addAppender(appender);
 
@@ -38,7 +38,7 @@ class LoggerStatsSinkTest {
 
     @Test
     void publishLogsCountersGaugesAndLatencies() {
-        LoggerStatsSink sink = new LoggerStatsSink();
+        LoggerStatsSinkService sink = new LoggerStatsSinkService();
         appender.start();
         logger.addAppender(appender);
 

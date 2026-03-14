@@ -42,6 +42,11 @@ public class StatsReporter {
         try {
             log.debug("Starting scheduled statistics report");
 
+            if (sinks.isEmpty()) {
+                log.debug("No enabled stats sinks found; skipping snapshot publish");
+                return;
+            }
+
             StatsSnapshot snapshot = collector.snapshotAndReset();
 
             for (IStatsSink sink : sinks) {
