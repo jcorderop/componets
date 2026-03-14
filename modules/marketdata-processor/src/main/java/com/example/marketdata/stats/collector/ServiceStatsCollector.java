@@ -15,9 +15,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Simple, flat statistics collector.
- * Use statsName-based keys like "consume.events", "forward.zmq.latency", etc.
- * Thread-safe Spring component for collecting statistics.
+ * Thread-safe, flat statistics collector used by the market-data pipeline.
+ * <p>
+ * In Spring mode, the snapshot name is configured with the
+ * {@code marketdata.stats.snapshot.name} property (default: {@code default_service}).
+ * This name is included in each {@link StatsSnapshot} and is used by sinks for report labels.
+ * </p>
  */
 @Component
 public class ServiceStatsCollector implements IStatsCollector {
@@ -31,35 +34,51 @@ public class ServiceStatsCollector implements IStatsCollector {
         this("service");
     }
 
+    /**
+     * Creates a collector with a snapshot name injected from Spring configuration.
+     *
+     * @param snapshotName value of {@code marketdata.stats.snapshot.name}
+     */
     @Autowired
     public ServiceStatsCollector(@Value("${marketdata.stats.snapshot.name:default_service}") String snapshotName) {
         this.snapshotName = snapshotName;
     }
 
     /**
-     * Get or create a counter metric.
-     * @param statsName metric statsName (e.g., "consume.events", "forward.zmq.events")
+     * Gets or creates a counter metric.
+     *
+     * @param statsName metric name (for example, {@code consume.events})
+     * @return counter metric instance for that name
      */
     public ICounterMetric counter(final String statsName) {
         return counters.computeIfAbsent(statsName, k -> new AtomicCounterMetric());
     }
 
     /**
-     * Get or create a gauge metric.
-     * @param statsName metric statsName (e.g., "consume.queueSize", "forward.zmq.queueSize")
+     * Gets or creates a gauge metric.
+     *
+     * @param statsName metric name (for example, {@code dispatch.zmq.queue_size})
+     * @return gauge metric instance for that name
      */
     public IGaugeMetric gauge(final String statsName) {
         return gauges.computeIfAbsent(statsName, k -> new AtomicGaugeMetric());
     }
 
     /**
-     * Get or create a latency metric.
-     * @param statsName metric statsName (e.g., "pipeline.latency", "forward.zmq.latency")
+     * Gets or creates a latency metric.
+     *
+     * @param statsName metric name (for example, {@code pipeline.latency_ms})
+     * @return latency metric instance for that name
      */
     public ILatencyMetric latency(final String statsName) {
         return latencies.computeIfAbsent(statsName, k -> new AtomicLatencyMetric());
     }
 
+    /**
+     * Captures a point-in-time snapshot and resets all metric windows atomically per metric.
+     *
+     * @return immutable snapshot with collector name, counters, gauges, and latency aggregates
+     */
     @Override
     public StatsSnapshot snapshotAndReset() {
         final Map<String, Long> counterSnapshot = new ConcurrentHashMap<>();
@@ -67,11 +86,11 @@ public class ServiceStatsCollector implements IStatsCollector {
         final Map<String, StatsSnapshot.LatencySnapshot> latencySnapshot = new ConcurrentHashMap<>();
 
         // Atomically snapshot and reset counters (thread-safe)
-        counters.forEach((statsName, counter) -> 
+        counters.forEach((statsName, counter) ->
                 counterSnapshot.put(statsName, counter.sumThenReset()));
 
         // Atomically snapshot and reset gauges (thread-safe)
-        gauges.forEach((statsName, gauge) -> 
+        gauges.forEach((statsName, gauge) ->
                 gaugeSnapshot.put(statsName, gauge.getAndReset()));
 
         // Atomically snapshot and reset latencies (thread-safe)
