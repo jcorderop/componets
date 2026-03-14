@@ -81,7 +81,7 @@ public class PrometheusStatsSink implements IStatsSink {
         return metricName + "|" + snapshotName;
     }
 
-    private String sanitize(final String name) {
-        return name.toLowerCase().replace('.', '_');
+    private String sanitize(String name) {
+        return name.toLowerCase().replaceAll("[^a-z0-9_]", "_");
     }
 }
