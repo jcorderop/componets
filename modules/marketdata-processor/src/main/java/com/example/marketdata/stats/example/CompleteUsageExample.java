@@ -6,6 +6,7 @@ import com.example.marketdata.stats.reporter.StatsSnapshot;
 import com.example.marketdata.stats.sink.IStatsSink;
 import com.example.marketdata.stats.sink.LoggerStatsSink;
 import com.example.marketdata.stats.sink.PrometheusStatsSink;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -28,9 +29,10 @@ public class CompleteUsageExample {
         ServiceStatsCollector stats = new ServiceStatsCollector();
 
         // 2. Configure sinks (can use multiple)
+        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
         List<IStatsSink> sinks = List.of(
                 new LoggerStatsSink(),
-                new PrometheusStatsSink("marketdata")
+                new PrometheusStatsSink("marketdata", meterRegistry)
         );
 
         // 3. Simulate market data processing

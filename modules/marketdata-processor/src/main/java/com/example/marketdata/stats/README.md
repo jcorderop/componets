@@ -155,13 +155,16 @@ When snapshot is empty, logs one `(empty)` line.
 
 ### PrometheusStatsSink
 
-Exports Prometheus exposition-style lines (logged), including:
+Exports metrics to Micrometer `MeterRegistry` so they can be scraped via Prometheus actuator endpoints, including:
 
-- `# TYPE` metadata lines
 - Sanitized metric names
-- `snapshot="..."` label
+- `snapshot="..."` label (as a Micrometer tag)
 - Counter suffix `_total`
-- Latency metrics as `<metric>_avg_ms` and `<metric>_max_ms`
+- Latency metrics as `<metric>_avg_ms` and `<metric>_max_ms` gauges
+
+### TelemetryStatsSink
+
+Exports metrics with the OpenTelemetry SDK (`OpenTelemetry`/`Meter`) for telemetry/APM pipelines (for example, APM -> Elastic), using the same naming and `snapshot` tagging model as `PrometheusStatsSink`.
 
 ---
 

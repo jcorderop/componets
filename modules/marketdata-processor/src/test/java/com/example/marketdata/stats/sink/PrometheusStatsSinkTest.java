@@ -1,46 +1,20 @@
 package com.example.marketdata.stats.sink;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import com.example.marketdata.stats.reporter.StatsSnapshot;
-import org.junit.jupiter.api.AfterEach;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PrometheusStatsSinkTest {
 
-    private final Logger logger = (Logger) LoggerFactory.getLogger(PrometheusStatsSink.class);
-    private final ListAppender<ILoggingEvent> appender = new ListAppender<>();
-
-    @AfterEach
-    void tearDown() {
-        logger.detachAppender(appender);
-        appender.stop();
-    }
-
     @Test
-    void publishLogsEmptyMessageForEmptySnapshot() {
-        PrometheusStatsSink sink = new PrometheusStatsSink("marketdata");
-        appender.start();
-        logger.addAppender(appender);
-
-        sink.publish(new StatsSnapshot("snap", Map.of(), Map.of(), Map.of()));
-
-        assertFalse(appender.list.isEmpty());
-        assertTrue(appender.list.get(0).getFormattedMessage().contains("(empty)"));
-    }
-
-    @Test
-    void publishLogsPrometheusLinesWithSanitizedNameAndEscapedLabel() {
-        PrometheusStatsSink sink = new PrometheusStatsSink("market-data");
-        appender.start();
-        logger.addAppender(appender);
+    void publishExportsCounterGaugeAndLatencyMetrics() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        PrometheusStatsSink sink = new PrometheusStatsSink("market-data", registry);
 
         sink.publish(new StatsSnapshot(
                 "snap\"name",
@@ -49,11 +23,58 @@ class PrometheusStatsSinkTest {
                 Map.of("lat.one", new StatsSnapshot.LatencySnapshot(1.25, 4.5))
         ));
 
-        String logs = appender.list.stream().map(ILoggingEvent::getFormattedMessage).reduce("", (a, b) -> a + "\n" + b);
-        assertTrue(logs.contains("# TYPE market_data_counter_one_total counter"));
-        assertTrue(logs.contains("market_data_counter_one_total{snapshot=\"snap\\\"name\"} 2"));
-        assertTrue(logs.contains("# TYPE market_data_gauge_two gauge"));
-        assertTrue(logs.contains("market_data_lat_one_avg_ms{snapshot=\"snap\\\"name\"} 1.2500"));
-        assertTrue(logs.contains("market_data_lat_one_max_ms{snapshot=\"snap\\\"name\"} 4.5000"));
+        assertEquals(2.0, counterValue(registry, "market_data_counter_one_total", "snap\"name"));
+        assertEquals(3.0, gaugeValue(registry, "market_data_gauge_two", "snap\"name"));
+        assertEquals(1.25, gaugeValue(registry, "market_data_lat_one_avg_ms", "snap\"name"));
+        assertEquals(4.5, gaugeValue(registry, "market_data_lat_one_max_ms", "snap\"name"));
+    }
+
+    @Test
+    void publishAccumulatesCountersAndUpdatesGaugesPerSnapshot() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        PrometheusStatsSink sink = new PrometheusStatsSink("marketdata", registry);
+
+        sink.publish(new StatsSnapshot(
+                "snap-a",
+                Map.of("events", 5L),
+                Map.of("queue.size", 7L),
+                Map.of("proc", new StatsSnapshot.LatencySnapshot(1.0, 2.0))
+        ));
+
+        sink.publish(new StatsSnapshot(
+                "snap-a",
+                Map.of("events", 3L),
+                Map.of("queue.size", 4L),
+                Map.of("proc", new StatsSnapshot.LatencySnapshot(2.5, 9.0))
+        ));
+
+        sink.publish(new StatsSnapshot(
+                "snap-b",
+                Map.of("events", 2L),
+                Map.of("queue.size", 11L),
+                Map.of("proc", new StatsSnapshot.LatencySnapshot(4.0, 10.0))
+        ));
+
+        assertEquals(8.0, counterValue(registry, "marketdata_events_total", "snap-a"));
+        assertEquals(2.0, counterValue(registry, "marketdata_events_total", "snap-b"));
+        assertEquals(4.0, gaugeValue(registry, "marketdata_queue_size", "snap-a"));
+        assertEquals(11.0, gaugeValue(registry, "marketdata_queue_size", "snap-b"));
+        assertEquals(2.5, gaugeValue(registry, "marketdata_proc_avg_ms", "snap-a"));
+        assertEquals(9.0, gaugeValue(registry, "marketdata_proc_max_ms", "snap-a"));
+    }
+
+    private double counterValue(MeterRegistry registry, String name, String snapshotName) {
+        return registry.get(name)
+                .tag("snapshot", snapshotName)
+                .counter()
+                .count();
+    }
+
+    private double gaugeValue(MeterRegistry registry, String name, String snapshotName) {
+        Double value = registry.get(name)
+                .tag("snapshot", snapshotName)
+                .gauge()
+                .value();
+        return value == null ? 0.0 : value;
     }
 }
