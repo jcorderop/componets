@@ -7,6 +7,8 @@ import com.example.marketdata.stats.metric.ICounterMetric;
 import com.example.marketdata.stats.metric.IGaugeMetric;
 import com.example.marketdata.stats.metric.ILatencyMetric;
 import com.example.marketdata.stats.snapshot.StatsSnapshot;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -21,9 +23,19 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class ServiceStatsCollector implements IStatsCollector {
 
+    private final String snapshotName;
     private final Map<String, ICounterMetric> counters = new ConcurrentHashMap<>();
     private final Map<String, IGaugeMetric> gauges = new ConcurrentHashMap<>();
     private final Map<String, ILatencyMetric> latencies = new ConcurrentHashMap<>();
+
+    public ServiceStatsCollector() {
+        this("service");
+    }
+
+    @Autowired
+    public ServiceStatsCollector(@Value("${marketdata.stats.snapshot.name:service}") String snapshotName) {
+        this.snapshotName = snapshotName;
+    }
 
     /**
      * Get or create a counter metric.
@@ -84,11 +96,10 @@ public class ServiceStatsCollector implements IStatsCollector {
         });
 
         return new StatsSnapshot(
-                "service",
+                snapshotName,
                 counterSnapshot,
                 gaugeSnapshot,
-                latencySnapshot,
-                Map.of() // No children in flat structure
+                latencySnapshot
         );
     }
 }

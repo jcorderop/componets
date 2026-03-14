@@ -18,6 +18,10 @@ public class AtomicLatencyMetric implements ILatencyMetric {
 
     @Override
     public double avg() {
+        // LongAdder provides thread-safe accumulation, but reading count and total
+        // is not an atomic "single point-in-time" snapshot across both values.
+        // This method therefore returns an eventually-consistent average under
+        // concurrent writes. For atomic export + reset, use snapshotAndReset().
         long c = count.sum();
         return c > 0 ? (double) total.sum() / c : 0.0;
     }

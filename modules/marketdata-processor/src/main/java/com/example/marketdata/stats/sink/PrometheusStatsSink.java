@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * Publishes statistics snapshots in Prometheus format.
- * Converts hierarchical structure to flat metric names with labels.
+ * Converts a flat snapshot to Prometheus metric lines.
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -20,7 +20,7 @@ public class PrometheusStatsSink implements IStatsSink {
     @Override
     public void publish(StatsSnapshot snapshot) {
         List<String> metrics = new ArrayList<>();
-        collectMetrics(snapshot, "", metrics);
+        collectMetrics(snapshot, metrics);
 
         log.info("=== Prometheus Metrics ===");
         metrics.forEach(log::info);
@@ -29,8 +29,8 @@ public class PrometheusStatsSink implements IStatsSink {
         // or expose via HTTP endpoint for scraping
     }
 
-    private void collectMetrics(StatsSnapshot snapshot, String path, List<String> metrics) {
-        String currentPath = path.isEmpty() ? snapshot.name() : path + "_" + snapshot.name();
+    private void collectMetrics(StatsSnapshot snapshot, List<String> metrics) {
+        String currentPath = snapshot.name();
 
         // Export counters
         snapshot.counters().forEach((name, value) -> {
@@ -52,9 +52,6 @@ public class PrometheusStatsSink implements IStatsSink {
             metrics.add(String.format("%s_max_micros %d", sanitize(baseName), latency.maxMicros()));
         });
 
-        // Recursively process children
-        snapshot.children().forEach((name, child) ->
-                collectMetrics(child, currentPath, metrics));
     }
 
     private String sanitize(String name) {
