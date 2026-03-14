@@ -10,9 +10,11 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * Spring-managed statistics reporter that periodically snapshots and publishes metrics.
- * Runs every minute (configurable) using Spring's @Scheduled annotation.
- * After publishing, resets all metrics for the next reporting window.
+ * Spring-managed reporter that periodically snapshots and publishes statistics.
+ * <p>
+ * Scheduling interval is configured with {@code stats.reporter.fixed-rate-millis}
+ * (default: {@code 60000} milliseconds).
+ * </p>
  */
 @Slf4j
 @Component
@@ -23,8 +25,10 @@ public class StatsReporter {
     private final List<IStatsSink> sinks;
 
     /**
-     * Automatically triggered at configured interval (default: 1 minute) by Spring scheduler.
-     * Takes a snapshot of all metrics, publishes to all configured sinks, and resets metrics.
+     * Scheduled task that captures a snapshot and publishes it to all configured sinks.
+     * <p>
+     * Failures in one sink do not prevent publishing to other sinks.
+     * </p>
      */
     @Scheduled(fixedRateString = "${stats.reporter.fixed-rate-millis:60000}")
     public void report() {

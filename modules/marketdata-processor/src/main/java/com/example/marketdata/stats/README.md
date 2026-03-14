@@ -45,6 +45,31 @@ Configure interval if needed:
 stats.reporter.fixed-rate-millis=60000
 ```
 
+Set a custom snapshot name (used in logs and sink labels) if needed:
+
+```properties
+marketdata.stats.snapshot.name=marketdata-processor
+```
+
+### Required configuration properties
+
+From the class-level configuration/docs (`ServiceStatsCollector`, `StatsReporter`):
+
+- There are **no strictly required** properties to start the stats system because both Spring-injected properties have defaults.
+- For production clarity, you should explicitly set the following properties:
+
+| Property | Used by | Default | Why you should set it |
+|---|---|---|---|
+| `marketdata.stats.snapshot.name` | `ServiceStatsCollector` | `default_service` | Distinguishes this service instance in emitted snapshots/logs/labels. |
+| `stats.reporter.fixed-rate-millis` | `StatsReporter` | `60000` | Controls reporting window and publish cadence. |
+
+Example:
+
+```properties
+marketdata.stats.snapshot.name=marketdata-processor
+stats.reporter.fixed-rate-millis=60000
+```
+
 ---
 
 ## Quick start (standalone)
@@ -208,4 +233,3 @@ The stats module includes dedicated unit tests for:
 - Sink formatting and empty behavior (`LoggerStatsSink`, `PrometheusStatsSink`)
 - Reporter orchestration/error isolation (`StatsReporter`)
 - Metric constants integrity (`MetricName`)
-

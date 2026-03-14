@@ -4,8 +4,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * Spring configuration for the statistics collection system.
- * Enables scheduled tasks for periodic stats reporting (every 1 minute).
+ * Enables Spring scheduling support required by {@code StatsReporter}.
+ * <p>
+ * The reporter interval is controlled by {@code stats.reporter.fixed-rate-millis}
+ * on the reporter itself.
+ * </p>
  */
 @Configuration
 @EnableScheduling
