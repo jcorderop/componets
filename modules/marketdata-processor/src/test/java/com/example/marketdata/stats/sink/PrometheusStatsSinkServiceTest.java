@@ -9,12 +9,12 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class PrometheusStatsSinkTest {
+class PrometheusStatsSinkServiceTest {
 
     @Test
     void publishExportsCounterGaugeAndLatencyMetrics() {
         MeterRegistry registry = new SimpleMeterRegistry();
-        PrometheusStatsSink sink = new PrometheusStatsSink("market-data", registry);
+        PrometheusStatsSinkService sink = new PrometheusStatsSinkService("market-data", registry);
 
         sink.publish(new StatsSnapshot(
                 "snap\"name",
@@ -32,7 +32,7 @@ class PrometheusStatsSinkTest {
     @Test
     void publishAccumulatesCountersAndUpdatesGaugesPerSnapshot() {
         MeterRegistry registry = new SimpleMeterRegistry();
-        PrometheusStatsSink sink = new PrometheusStatsSink("marketdata", registry);
+        PrometheusStatsSinkService sink = new PrometheusStatsSinkService("marketdata", registry);
 
         sink.publish(new StatsSnapshot(
                 "snap-a",
