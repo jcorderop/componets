@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Publishes statistics snapshots in Prometheus format.
+ * Publishes statistics snapshots in Prometheus text exposition format.
  * Converts a flat snapshot to Prometheus metric lines.
  */
 @Slf4j
@@ -18,46 +18,66 @@ public class PrometheusStatsSink implements IStatsSink {
     private final String metricPrefix;
 
     @Override
-    public void publish(StatsSnapshot snapshot) {
-        List<String> metrics = new ArrayList<>();
+    public void publish(final StatsSnapshot snapshot) {
+        final List<String> metrics = new ArrayList<>();
         collectMetrics(snapshot, metrics);
 
-        log.info("=== Prometheus Metrics ===");
+        if (metrics.isEmpty()) {
+            log.info("=== Prometheus Metrics: {} (empty) ===", snapshot.name());
+            return;
+        }
+
+        log.info("=== Prometheus Metrics: {} ===", snapshot.name());
         metrics.forEach(log::info);
 
         // Here you would typically push to Prometheus Pushgateway
         // or expose via HTTP endpoint for scraping
     }
 
-    private void collectMetrics(StatsSnapshot snapshot, List<String> metrics) {
-        String currentPath = snapshot.name();
+    private void collectMetrics(final StatsSnapshot snapshot, final List<String> metrics) {
+        final String snapshotLabel = escapeLabel(snapshot.name());
 
-        // Export counters
         snapshot.counters().forEach((name, value) -> {
-            String metricName = metricPrefix + "_" + currentPath + "_" + name + "_total";
-            metrics.add(String.format("%s %d", sanitize(metricName), value));
+            final String metricName = sanitize(metricPrefix + "_" + name + "_total");
+            addMetricHeader(metrics, metricName, "counter");
+            metrics.add(String.format("%s{snapshot=\"%s\"} %d", metricName, snapshotLabel, value));
         });
 
-        // Export gauges
         snapshot.gauges().forEach((name, value) -> {
-            String metricName = metricPrefix + "_" + currentPath + "_" + name;
-            metrics.add(String.format("%s %d", sanitize(metricName), value));
+            final String metricName = sanitize(metricPrefix + "_" + name);
+            addMetricHeader(metrics, metricName, "gauge");
+            metrics.add(String.format("%s{snapshot=\"%s\"} %d", metricName, snapshotLabel, value));
         });
 
-        // Export latencies (as multiple metrics)
         snapshot.latencies().forEach((name, latency) -> {
-            String baseName = metricPrefix + "_" + currentPath + "_" + name;
-            metrics.add(String.format("%s_count %d", sanitize(baseName), latency.count()));
-            metrics.add(String.format("%s_sum_micros %d", sanitize(baseName), latency.totalMicros()));
-            metrics.add(String.format("%s_max_micros %d", sanitize(baseName), latency.maxMicros()));
-        });
+            final String avgMetricName = sanitize(metricPrefix + "_" + name + "_avg_ms");
+            addMetricHeader(metrics, avgMetricName, "gauge");
+            metrics.add(String.format("%s{snapshot=\"%s\"} %.4f", avgMetricName, snapshotLabel, latency.avg()));
 
+            final String maxMetricName = sanitize(metricPrefix + "_" + name + "_max_ms");
+            addMetricHeader(metrics, maxMetricName, "gauge");
+            metrics.add(String.format("%s{snapshot=\"%s\"} %.4f", maxMetricName, snapshotLabel, latency.max()));
+        });
     }
 
-    private String sanitize(String name) {
+    private void addMetricHeader(final List<String> metrics, final String metricName, final String metricType) {
+        metrics.add("# TYPE " + metricName + " " + metricType);
+    }
+
+    private String sanitize(final String name) {
         return name.toLowerCase()
                 .replace("-", "_")
                 .replace(":", "_")
-                .replaceAll("[^a-z0-9_]", "");
+                .replace('.', '_')
+                .replaceAll("[^a-z0-9_]", "_")
+                .replaceAll("_+", "_")
+                .replaceAll("^_+|_+$", "");
+    }
+
+    private String escapeLabel(final String labelValue) {
+        return labelValue
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n");
     }
 }

@@ -20,7 +20,8 @@ public class AtomicLatencyMetric implements ILatencyMetric {
     public LatencyValues snapshotAndReset() {
         final long capturedCount = count.sumThenReset();
         final long capturedMax = max.getAndSet(0);
-        final var capturedAvg = capturedCount > 0 ? (double) latency.sum() / capturedCount : 0.0;
+        final long capturedLatency = latency.sumThenReset();
+        final var capturedAvg = capturedCount > 0 ? (double) capturedLatency / capturedCount : 0.0;
         return new LatencyValues(capturedAvg, capturedMax);
     }
 }
