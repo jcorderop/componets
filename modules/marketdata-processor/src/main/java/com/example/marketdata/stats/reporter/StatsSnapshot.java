@@ -1,4 +1,4 @@
-package com.example.marketdata.stats.snapshot;
+package com.example.marketdata.stats.reporter;
 
 import java.util.Collections;
 import java.util.Map;
@@ -23,12 +23,7 @@ public record StatsSnapshot(
      * Immutable snapshot of latency metrics.
      */
     public record LatencySnapshot(
-            long count,
-            long totalMicros,
-            long maxMicros
-    ) {
-        public double avgMicros() {
-            return count > 0 ? (double) totalMicros / count : 0.0;
-        }
-    }
+            double avg,
+            double max
+    ) {}
 }

@@ -7,18 +7,8 @@ public class AtomicCounterMetric implements ICounterMetric {
     private final LongAdder counter = new LongAdder();
 
     @Override
-    public void add(long delta) {
+    public void add(final long delta) {
         counter.add(delta);
-    }
-
-    @Override
-    public long value() {
-        return counter.sum();
-    }
-
-    @Override
-    public void reset() {
-        counter.reset();
     }
 
     @Override

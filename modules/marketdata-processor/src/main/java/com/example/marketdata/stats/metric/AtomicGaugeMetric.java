@@ -7,18 +7,8 @@ public class AtomicGaugeMetric implements IGaugeMetric {
     private final AtomicLong value = new AtomicLong();
 
     @Override
-    public void set(long value) {
+    public void set(final  long value) {
         this.value.set(value);
-    }
-
-    @Override
-    public long value() {
-        return value.get();
-    }
-
-    @Override
-    public void reset() {
-        value.set(0);
     }
 
     @Override

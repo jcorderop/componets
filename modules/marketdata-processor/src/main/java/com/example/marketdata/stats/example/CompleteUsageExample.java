@@ -5,7 +5,7 @@ import com.example.marketdata.stats.collector.ServiceStatsCollector;
 import com.example.marketdata.stats.sink.IStatsSink;
 import com.example.marketdata.stats.sink.LoggerStatsSink;
 import com.example.marketdata.stats.sink.PrometheusStatsSink;
-import com.example.marketdata.stats.snapshot.StatsSnapshot;
+import com.example.marketdata.stats.reporter.StatsSnapshot;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -70,7 +70,7 @@ public class CompleteUsageExample {
         int totalConsumed = 1800;
         for (int i = 0; i < totalConsumed; i++) {
             stats.counter(MetricName.PIPELINE_RECEIVED_EVENTS).add(1);
-            stats.latency(MetricName.PIPELINE_LATENCY_MAX_MS).record(100 + (i % 50));
+            stats.latency(MetricName.PIPELINE_LATENCY_MS).record(100 + (i % 50));
             stats.latency(MetricName.PIPELINE_LATENCY_AVG_MS).record(80 + (i % 40));
             stats.counter(MetricName.PIPELINE_FORWARDED_EVENTS).add(1);
         }
@@ -127,13 +127,7 @@ public class CompleteUsageExample {
         }
 
         // Gauge usage (e.g., current in-memory queue depth)
-        stats.gauge(MetricName.FORWARD_ZMQ_QUEUE_SIZE).set(27);
-
-        // Optional direct reads from latency metric API
-        double latestPipelineAvg = stats.latency(MetricName.PIPELINE_LATENCY_AVG_MS).avg();
-        long latestPipelineMax = stats.latency(MetricName.PIPELINE_LATENCY_MAX_MS).max();
-        log.info("Current ZMQ queue depth={}, pipeline avg={}, pipeline max={}",
-                stats.gauge(MetricName.FORWARD_ZMQ_QUEUE_SIZE).value(), latestPipelineAvg, latestPipelineMax);
+        stats.gauge(MetricName.DISPATCHED_EVENTS).set(27);
 
         log.info("Processing complete.");
     }

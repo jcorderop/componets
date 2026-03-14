@@ -1,6 +1,6 @@
 package com.example.marketdata.stats.sink;
 
-import com.example.marketdata.stats.snapshot.StatsSnapshot;
+import com.example.marketdata.stats.reporter.StatsSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

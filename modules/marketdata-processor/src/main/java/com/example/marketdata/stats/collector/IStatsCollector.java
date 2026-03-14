@@ -1,6 +1,6 @@
 package com.example.marketdata.stats.collector;
 
-import com.example.marketdata.stats.snapshot.StatsSnapshot;
+import com.example.marketdata.stats.reporter.StatsSnapshot;
 
 /**
  * Interface for collecting statistics.

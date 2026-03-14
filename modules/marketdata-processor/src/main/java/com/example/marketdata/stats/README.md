@@ -233,16 +233,18 @@ stats.counter(MetricName.PIPELINE_RECEIVED_EVENTS).add(batchSize);
 For standalone applications, you need to manually trigger reporting:
 
 ```java
-import com.example.marketdata.stats.snapshot.StatsSnapshot;
+import com.example.marketdata.stats.reporter.StatsSnapshot;
 import com.example.marketdata.stats.sink.LoggerStatsSink;
 import com.example.marketdata.stats.sink.IStatsSink;
 
 // Create sinks
 IStatsSink loggerSink = new LoggerStatsSink();
 
-// Periodically (e.g., every minute in a scheduled task)
-StatsSnapshot snapshot = stats.snapshotAndReset();
-loggerSink.publish(snapshot);
+        // Periodically (e.g., every minute in a scheduled task)
+        StatsSnapshot snapshot = stats.snapshotAndReset();
+loggerSink.
+
+        publish(snapshot);
 ```
 
 **How it works:**
@@ -255,24 +257,24 @@ loggerSink.publish(snapshot);
 You can access snapshot data programmatically:
 
 ```java
-import com.example.marketdata.stats.snapshot.StatsSnapshot;
+import com.example.marketdata.stats.reporter.StatsSnapshot;
 
 // Take snapshot and reset all metrics
 StatsSnapshot snapshot = stats.snapshotAndReset();
 
-// Access counter values
-Long consumedEvents = snapshot.counters().get("consumed.events");
-Long droppedEvents = snapshot.counters().get("dispatched.zmq.eventsDropped");
+        // Access counter values
+        Long consumedEvents = snapshot.counters().get("consumed.events");
+        Long droppedEvents = snapshot.counters().get("dispatched.zmq.eventsDropped");
 
-// Access gauge values (if using gauges)
-Long queueSize = snapshot.gauges().get("some.gauge.metric");
+        // Access gauge values (if using gauges)
+        Long queueSize = snapshot.gauges().get("some.gauge.metric");
 
-// Access latency metrics
-StatsSnapshot.LatencySnapshot pipelineLatency = snapshot.latencies().get("pipeline.latencyMax");
-if (pipelineLatency != null) {
-    long count = pipelineLatency.count();
-    double avgMicros = pipelineLatency.avgMicros();
-    long maxMicros = pipelineLatency.maxMicros();
+        // Access latency metrics
+        StatsSnapshot.LatencySnapshot pipelineLatency = snapshot.latencies().get("pipeline.latencyMax");
+if(pipelineLatency !=null){
+        long count = pipelineLatency.count();
+        double avgMicros = pipelineLatency.avgMicros();
+        long maxMicros = pipelineLatency.maxMicros();
 }
 ```
 
@@ -310,14 +312,14 @@ long max = stats.latency("pipeline.latency").max();
 
 ```java
 import com.example.marketdata.stats.sink.IStatsSink;
-import com.example.marketdata.stats.snapshot.StatsSnapshot;
+import com.example.marketdata.stats.reporter.StatsSnapshot;
 
 public class ElasticsearchSink implements IStatsSink {
-    @Override
-    public void publish(StatsSnapshot snapshot) {
-        // Convert snapshot to Elasticsearch document
-        // Send to Elasticsearch
-    }
+  @Override
+  public void publish(StatsSnapshot snapshot) {
+    // Convert snapshot to Elasticsearch document
+    // Send to Elasticsearch
+  }
 }
 ```
 
@@ -368,35 +370,61 @@ The entire statistics system is designed for high-concurrency environments where
 - **snapshotAndReset()**: Atomically captures values and resets in single operation - no race conditions
 
 ### Example: Safe Concurrent Usage
+
 ```java
 import com.example.marketdata.stats.collector.MetricName;
 import com.example.marketdata.stats.collector.ServiceStatsCollector;
-import com.example.marketdata.stats.snapshot.StatsSnapshot;
+import com.example.marketdata.stats.reporter.StatsSnapshot;
+import com.example.marketdata.stats.reporter.StatsSnapshot;
 
 // Multiple threads can safely update the same metrics simultaneously
 ServiceStatsCollector stats = new ServiceStatsCollector();
 
 // Thread 1
-new Thread(() -> {
-    for (int i = 0; i < 1000; i++) {
-        stats.counter(MetricName.CONSUME_EVENTS).add(1);
+new
+
+        Thread(() ->{
+        for(
+        int i = 0;
+        i< 1000;i++){
+        stats.
+
+        counter(MetricName.CONSUME_EVENTS).
+
+        add(1);
     }
-}).start();
+            }).
+
+        start();
 
 // Thread 2 (updating same metric)
-new Thread(() -> {
-    for (int i = 0; i < 1000; i++) {
-        stats.counter(MetricName.CONSUME_EVENTS).add(1);
+new
+
+        Thread(() ->{
+        for(
+        int i = 0;
+        i< 1000;i++){
+        stats.
+
+        counter(MetricName.CONSUME_EVENTS).
+
+        add(1);
     }
-}).start();
+            }).
+
+        start();
 
 // Reporter thread (periodic snapshots)
-new Thread(() -> {
-    while (running) {
+new
+
+        Thread(() ->{
+        while(running){
         StatsSnapshot snapshot = stats.snapshotAndReset();
         // No data loss - snapshot is atomic
     }
-}).start();
+            }).
+
+        start();
 
 // Result: All 2000 events are counted, no data loss during snapshot
 ```
