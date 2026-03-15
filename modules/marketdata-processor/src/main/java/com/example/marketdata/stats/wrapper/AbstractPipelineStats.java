@@ -6,7 +6,7 @@ import com.example.marketdata.stats.metric.ILatencyMetric;
 /**
  * Base API for pipeline-stage metrics.
  */
-public abstract class AbstractPipelineStats {
+public abstract class AbstractPipelineStats implements IWrapperStats {
 
     private final ICounterMetric received;
     private final ILatencyMetric latency;
