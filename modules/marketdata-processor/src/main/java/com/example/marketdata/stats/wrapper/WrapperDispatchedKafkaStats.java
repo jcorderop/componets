@@ -2,10 +2,12 @@ package com.example.marketdata.stats.wrapper;
 
 import com.example.marketdata.stats.collector.MetricName;
 import com.example.marketdata.stats.collector.ServiceStatsCollector;
+import org.springframework.stereotype.Component;
 
 /**
  * Kafka dispatched metrics wrapper.
  */
+@Component
 public class WrapperDispatchedKafkaStats extends AbstractDispatchedStats {
 
     public WrapperDispatchedKafkaStats(final ServiceStatsCollector collector) {

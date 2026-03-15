@@ -20,22 +20,25 @@ Simple, thread-safe statistics collection for market-data processing.
 @RequiredArgsConstructor
 public class MarketDataService {
 
-    private final ServiceStatsCollector stats;
+    private final WrapperConsumedKafkaStats consumedKafka;
+    private final WrapperPipelineStats pipeline;
+    private final WrapperDispatchedZmqStats dispatchedZmq;
 
     public void process(Event event) {
-        stats.counter(MetricName.CONSUMED_EVENTS).add(1);
-        stats.counter(MetricName.CONSUMED_KAFKA_EVENTS).add(1);
+        consumedKafka.addConsumed(1);
 
-        stats.counter(MetricName.PIPELINE_RECEIVED_EVENTS).add(1);
-        stats.latency(MetricName.PIPELINE_LATENCY).record(120);
-        stats.counter(MetricName.PIPELINE_FORWARDED_EVENTS).add(1);
+        pipeline.addReceived(1);
+        pipeline.recordLatency(120);
+        pipeline.addForwarded(1);
 
-        stats.counter(MetricName.DISPATCHED_EVENTS).add(1);
-        stats.latency(MetricName.DISPATCHED_ZMQ_LATENCY_MS).record(40);
-        stats.gauge(MetricName.DISPATCHED_ZMQ_QUEUE_SIZE).setMax(18);
+        dispatchedZmq.addDispatched(1);
+        dispatchedZmq.recordLatency(40);
+        dispatchedZmq.setQueueSizeMax(18);
     }
 }
 ```
+
+All `Wrapper*Stats` classes are Spring beans (`@Component`) and can be injected directly into your services.
 
 `StatsReporter` publishes automatically every minute by default.
 
@@ -112,12 +115,46 @@ sink.publish(snapshot);
 
 ## Quick start (typed wrappers)
 
-If you prefer strongly-typed stage APIs over direct `MetricName` usage, instantiate wrapper classes once and reuse them in your flow:
+If you prefer strongly-typed stage APIs over direct `MetricName` usage, use wrapper classes in either mode:
+
+### Spring Boot mode (recommended)
+
+Inject wrappers directly into your service:
+
+```java
+@Service
+@RequiredArgsConstructor
+public class MarketDataService {
+
+    private final WrapperConsumedKafkaStats consumedKafka;
+    private final WrapperPipelineStats pipeline;
+    private final WrapperDispatchedZmqStats dispatchedZmq;
+    private final WrapperStoragePostgresStats storagePostgres;
+
+    public void process(Event event) {
+        consumedKafka.addConsumed(1);
+        pipeline.addReceived(1);
+        pipeline.recordLatency(18);
+        pipeline.addForwarded(1);
+
+        dispatchedZmq.addDispatched(1);
+        dispatchedZmq.recordLatency(12);
+        dispatchedZmq.setQueueSizeMax(4);
+
+        storagePostgres.addStored(1);
+        storagePostgres.recordLatency(25);
+    }
+}
+```
+
+### Standalone mode
+
+Instantiate wrappers manually with one `ServiceStatsCollector`:
 
 ```java
 ServiceStatsCollector stats = new ServiceStatsCollector("marketdata");
 
-AbstractConsumedStats consumedKafka = new WrapperConsumedKafkaStats(stats);
+WrapperConsumedKafkaStats consumedKafka = new WrapperConsumedKafkaStats(stats);
 WrapperPipelineStats pipeline = new WrapperPipelineStats(stats);
 WrapperDispatchedZmqStats dispatchedZmq = new WrapperDispatchedZmqStats(stats);
 WrapperStoragePostgresStats storagePostgres = new WrapperStoragePostgresStats(stats);
@@ -141,6 +178,8 @@ Available wrappers:
 - Pipeline: `WrapperPipelineStats`
 - Dispatched: `WrapperDispatchedZmqStats`, `WrapperDispatchedKafkaStats`, `WrapperDispatchedHazelcastStats`
 - Storage: `WrapperStoragePostgresStats`, `WrapperStorageOracleStats`
+
+All wrappers share a common marker type: `IWrapperStats` (implemented by `AbstractConsumedStats`, `AbstractPipelineStats`, `AbstractDispatchedStats`, and `AbstractStorageStats`).
 
 ## Metric API semantics
 
@@ -273,6 +312,8 @@ Use `MetricName` constants instead of raw strings.
 ### How they work internally
 
 - Each wrapper receives one `ServiceStatsCollector` instance in its constructor.
+- In Spring Boot, wrappers are registered as beans (`@Component`) and are auto-wired into services.
+- Abstract wrapper families implement the empty `IWrapperStats` marker interface so all wrappers can be treated as one common type when needed.
 - The wrapper resolves and stores metric handles (`counter`, `latency`, `gauge`) exactly once.
 - Wrapper methods (`addConsumed`, `addForwarded`, `setQueueSizeMax`, etc.) delegate directly to those metric handles.
 - Reporting is unchanged: `StatsReporter` still calls `snapshotAndReset()` and sinks publish the resulting `StatsSnapshot`.
@@ -302,7 +343,16 @@ public class ElasticsearchSink implements IStatsSink {
 }
 ```
 
+
 ---
+
+## Usage examples in tests
+
+Runtime `main(...)` example classes were moved to unit tests to keep usage samples executable and verifiable.
+
+See `src/test/java/com/example/marketdata/stats/example/WrapperUsageExamplesTest.java` for:
+- standalone wrapper usage
+- common `IWrapperStats` typing for Spring-style exchange/injection
 
 ## Testing status
 

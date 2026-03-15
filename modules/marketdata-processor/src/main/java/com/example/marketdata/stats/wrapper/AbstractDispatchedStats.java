@@ -7,7 +7,7 @@ import com.example.marketdata.stats.metric.ILatencyMetric;
 /**
  * Base API for dispatched-stage metrics.
  */
-public abstract class AbstractDispatchedStats {
+public abstract class AbstractDispatchedStats implements IWrapperStats {
 
     private final ICounterMetric dispatched;
     private final ILatencyMetric latency;
