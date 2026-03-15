@@ -33,13 +33,13 @@ public class AtomicLatencyMetric implements ILatencyMetric {
 
     @Override
     public LatencyValues snapshotAndReset() {
-        State captured = current.getAndSet(new State());
+        final State captured = current.getAndSet(new State());
 
-        long capturedCount = captured.count.get();
-        long capturedTotal = captured.total.get();
-        long capturedMax = captured.max.get();
+        final long capturedCount = captured.count.get();
+        final long capturedTotal = captured.total.get();
+        final long capturedMax = captured.max.get();
 
-        double avg = capturedCount > 0 ? (double) capturedTotal / capturedCount : 0.0;
+        final double avg = capturedCount > 0 ? (double) capturedTotal / capturedCount : 0.0;
         return new LatencyValues(avg, capturedMax);
     }
 }
