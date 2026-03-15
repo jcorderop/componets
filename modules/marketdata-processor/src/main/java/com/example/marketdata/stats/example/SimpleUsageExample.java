@@ -16,7 +16,6 @@ public class SimpleUsageExample {
         ServiceStatsCollector stats = new ServiceStatsCollector();
 
         // Consume stage metrics
-        stats.counter(MetricName.CONSUMED_EVENTS).add(4);
         stats.counter(MetricName.CONSUMED_KAFKA_EVENTS).add(1);
         stats.counter(MetricName.CONSUMED_FIX_EVENTS).add(1);
         stats.counter(MetricName.CONSUMED_RFA_EVENTS).add(1);

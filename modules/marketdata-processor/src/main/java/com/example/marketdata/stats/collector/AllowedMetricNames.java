@@ -7,7 +7,6 @@ public final class AllowedMetricNames {
     private AllowedMetricNames() {}
 
     public static final Set<String> ALL = Set.of(
-            MetricName.CONSUMED_EVENTS,
             MetricName.CONSUMED_KAFKA_EVENTS,
             MetricName.CONSUMED_FIX_EVENTS,
             MetricName.CONSUMED_RFA_EVENTS,

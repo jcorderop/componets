@@ -44,7 +44,7 @@ public final class MetricName {
     private static final String CONSUMER_BPIPE = "bpipe";
 
     // Consume stage metrics - common
-    public static final String CONSUMED_EVENTS = CONSUMED_PREFIX + METRIC_EVENTS;
+    private static final String CONSUMED_EVENTS = CONSUMED_PREFIX + METRIC_EVENTS;
 
     // Consume stage metrics - per consumer service
     public static final String CONSUMED_KAFKA_EVENTS = CONSUMED_PREFIX + CONSUMER_KAFKA + METRIC_EVENTS;

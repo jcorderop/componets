@@ -66,14 +66,12 @@ public class CompleteUsageExample {
         // Consume stage - RFA consumer
         for (int i = 0; i < 300; i++) {
             stats.counter(MetricName.CONSUMED_RFA_EVENTS).add(1);
-            stats.counter(MetricName.CONSUMED_EVENTS).add(1);
         }
 
 
         // Consume stage - BPIPE consumer
         for (int i = 0; i < 200; i++) {
             stats.counter(MetricName.CONSUMED_BPIPE_EVENTS).add(1);
-            stats.counter(MetricName.CONSUMED_EVENTS).add(1);
         }
 
         // Pipeline processing with latency tracking
