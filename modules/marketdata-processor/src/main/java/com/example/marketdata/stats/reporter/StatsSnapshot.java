@@ -1,6 +1,5 @@
 package com.example.marketdata.stats.reporter;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**

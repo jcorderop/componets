@@ -42,7 +42,7 @@ public class StatsReporter {
         try {
             log.debug("Starting scheduled statistics report");
 
-            StatsSnapshot snapshot = collector.snapshotAndReset();
+            final StatsSnapshot snapshot = collector.snapshotAndReset();
 
             for (IStatsSink sink : sinks) {
                 try {

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -84,9 +85,9 @@ public class ServiceStatsCollector implements IStatsCollector {
      */
     @Override
     public StatsSnapshot snapshotAndReset() {
-        final Map<String, Long> counterSnapshot = new ConcurrentHashMap<>();
-        final Map<String, Long> gaugeSnapshot = new ConcurrentHashMap<>();
-        final Map<String, StatsSnapshot.LatencySnapshot> latencySnapshot = new ConcurrentHashMap<>();
+        final Map<String, Long> counterSnapshot = new HashMap<>();
+        final Map<String, Long> gaugeSnapshot = new HashMap<>();
+        final Map<String, StatsSnapshot.LatencySnapshot> latencySnapshot = new HashMap<>();
 
         // Atomically snapshot and reset counters (thread-safe)
         counters.forEach((statsName, counter) ->
