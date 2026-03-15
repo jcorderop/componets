@@ -109,6 +109,39 @@ sink.publish(snapshot);
 
 ---
 
+
+## Quick start (typed wrappers)
+
+If you prefer strongly-typed stage APIs over direct `MetricName` usage, instantiate wrapper classes once and reuse them in your flow:
+
+```java
+ServiceStatsCollector stats = new ServiceStatsCollector("marketdata");
+
+AbstractConsumedStats consumedKafka = new WrapperConsumedKafkaStats(stats);
+WrapperPipelineStats pipeline = new WrapperPipelineStats(stats);
+WrapperDispatchedZmqStats dispatchedZmq = new WrapperDispatchedZmqStats(stats);
+WrapperStoragePostgresStats storagePostgres = new WrapperStoragePostgresStats(stats);
+
+consumedKafka.addConsumed(1);
+pipeline.addReceived(1);
+pipeline.recordLatency(18);
+pipeline.addForwarded(1);
+
+dispatchedZmq.addDispatched(1);
+dispatchedZmq.recordLatency(12);
+dispatchedZmq.setQueueSizeMax(4);
+
+storagePostgres.addStored(1);
+storagePostgres.recordLatency(25);
+```
+
+Available wrappers:
+
+- Consumed: `WrapperConsumedKafkaStats`, `WrapperConsumedFixStats`, `WrapperConsumedRfaStats`, `WrapperConsumedBpipeStats`
+- Pipeline: `WrapperPipelineStats`
+- Dispatched: `WrapperDispatchedZmqStats`, `WrapperDispatchedKafkaStats`, `WrapperDispatchedHazelcastStats`
+- Storage: `WrapperStoragePostgresStats`, `WrapperStorageOracleStats`
+
 ## Metric API semantics
 
 ### Counter
@@ -234,6 +267,30 @@ Use `MetricName` constants instead of raw strings.
 
 ---
 
+
+## How wrappers work and how to extend
+
+### How they work internally
+
+- Each wrapper receives one `ServiceStatsCollector` instance in its constructor.
+- The wrapper resolves and stores metric handles (`counter`, `latency`, `gauge`) exactly once.
+- Wrapper methods (`addConsumed`, `addForwarded`, `setQueueSizeMax`, etc.) delegate directly to those metric handles.
+- Reporting is unchanged: `StatsReporter` still calls `snapshotAndReset()` and sinks publish the resulting `StatsSnapshot`.
+
+### Extending with a new metric family
+
+When adding a new destination/source/channel, follow this sequence:
+
+1. Add a constant to `MetricName` and include it in `AllowedMetricNames`.
+2. Decide whether it fits an existing abstraction (`AbstractConsumedStats`, `AbstractDispatchedStats`, etc.) or requires a new abstract base.
+3. Add a concrete wrapper that wires the correct metric constants in the constructor.
+4. Add/update tests to assert the wrapper writes to the expected snapshot fields.
+5. Document usage and property impact in this README.
+
+This keeps call sites free from raw metric names while preserving the single-source metric catalog in `MetricName`.
+
+---
+
 ## Custom sink
 
 ```java
@@ -257,3 +314,4 @@ The stats module includes dedicated unit tests for:
 - Sink formatting and empty behavior (`LoggerStatsSinkService`, `PrometheusStatsSinkService`)
 - Reporter orchestration/error isolation (`StatsReporter`)
 - Metric constants integrity (`MetricName`)
+- Typed wrapper wiring/delegation (`WrapperStatsTest`)
