@@ -6,7 +6,7 @@ import com.example.marketdata.stats.metric.ILatencyMetric;
 /**
  * Base API for storage-stage metrics.
  */
-public abstract class AbstractStorageStats {
+public abstract class AbstractStorageStats implements IWrapperStats {
 
     private final ICounterMetric stored;
     private final ILatencyMetric latency;

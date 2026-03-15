@@ -2,10 +2,12 @@ package com.example.marketdata.stats.wrapper;
 
 import com.example.marketdata.stats.collector.MetricName;
 import com.example.marketdata.stats.collector.ServiceStatsCollector;
+import org.springframework.stereotype.Component;
 
 /**
  * Oracle storage metrics wrapper.
  */
+@Component
 public class WrapperStorageOracleStats extends AbstractStorageStats {
 
     public WrapperStorageOracleStats(final ServiceStatsCollector collector) {

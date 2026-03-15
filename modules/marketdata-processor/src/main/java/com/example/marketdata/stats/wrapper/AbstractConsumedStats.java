@@ -9,7 +9,7 @@ import com.example.marketdata.stats.metric.ICounterMetric;
  * (Kafka/FIX/RFA/BPIPE).
  * </p>
  */
-public abstract class AbstractConsumedStats {
+public abstract class AbstractConsumedStats implements IWrapperStats {
 
     private final ICounterMetric consumed;
 

@@ -6,6 +6,7 @@ import com.example.marketdata.stats.reporter.StatsSnapshot;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WrapperStatsTest {
 
@@ -128,4 +129,15 @@ class WrapperStatsTest {
         assertEquals(100.0, snapshot.latencies().get(MetricName.STORAGE_POSTGRES_LATENCY_MS).max(), 1e-9);
         assertEquals(200.0, snapshot.latencies().get(MetricName.STORAGE_ORACLE_LATENCY_MS).max(), 1e-9);
     }
+
+    @Test
+    void allAbstractWrapperFamiliesImplementIWrapperStats() {
+        ServiceStatsCollector collector = new ServiceStatsCollector("wrapper-test");
+
+        assertTrue(new WrapperConsumedKafkaStats(collector) instanceof IWrapperStats);
+        assertTrue(new WrapperPipelineStats(collector) instanceof IWrapperStats);
+        assertTrue(new WrapperDispatchedZmqStats(collector) instanceof IWrapperStats);
+        assertTrue(new WrapperStoragePostgresStats(collector) instanceof IWrapperStats);
+    }
+
 }
